@@ -20,6 +20,7 @@
 #include <memory>
 #include <mutex>  // NOLINT
 
+#include "sensors/position_data.h"
 #include "include/cardboard.h"
 #include "sensors/accelerometer_data.h"
 #include "sensors/gyroscope_data.h"
@@ -82,6 +83,8 @@ class HeadTracker {
   // Latest gyroscope data.
   GyroscopeData latest_gyroscope_data_;
 
+  std::unique_ptr<PositionData> position_data_;
+
   // Event providers supplying AccelerometerData and GyroscopeData to the
   // detector.
   std::shared_ptr<SensorEventProducer<AccelerometerData>> accel_sensor_;
@@ -98,6 +101,15 @@ class HeadTracker {
   // Tells wheter the attribute viewport_orientation_ has been initialized or
   // not.
   bool is_viewport_orientation_initialized_;
+
+  int logCount_;
+
+  std::array<float, 3> out_position_neck_;
+  std::array<float, 3> out_position_new_;
+  std::array<float, 3> in_position_old_;
+
+
+
 };
 
 }  // namespace cardboard

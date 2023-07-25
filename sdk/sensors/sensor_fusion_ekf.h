@@ -88,6 +88,8 @@ class SensorFusionEkf {
   //                 frame to Start Space.
   void RotateSensorSpaceToStartSpaceTransformation(const Rotation& rotation);
 
+  Vector3 GetAccelerometerUpdatedValue() const;
+
  private:
   // Estimates the average timestep between gyroscope event.
   void FilterGyroscopeTimestep(double gyroscope_timestep);

@@ -15,12 +15,15 @@
  */
 #include "head_tracker.h"
 
+#include "sensors/position_data.h"
 #include "include/cardboard.h"
 #include "sensors/neck_model.h"
 #include "util/logging.h"
 #include "util/rotation.h"
 #include "util/vector.h"
 #include "util/vectorutils.h"
+#include <android/log.h>
+#include <array>
 
 namespace cardboard {
 // @{ Hold rotations to adapt the pose estimation to the viewport and head
@@ -119,7 +122,12 @@ HeadTracker::HeadTracker()
       latest_gyroscope_data_({0, 0, Vector3::Zero()}),
       accel_sensor_(new SensorEventProducer<AccelerometerData>()),
       gyro_sensor_(new SensorEventProducer<GyroscopeData>()),
-      is_viewport_orientation_initialized_(false) {
+      is_viewport_orientation_initialized_(false),
+      logCount_(0),
+      out_position_neck_({0.0f, 0.0f, 0.0f}),
+      out_position_new_({0.0f, 0.0f, 0.0f}),
+      position_data_(new cardboard::PositionData()),
+      in_position_old_({0.0f, 0.0f, 0.0f}) {
   on_accel_callback_ = [&](const AccelerometerData& event) {
     OnAccelerometerData(event);
   };
@@ -173,7 +181,29 @@ void HeadTracker::GetPose(int64_t timestamp_ns,
   out_orientation[2] = static_cast<float>(orientation[2]);
   out_orientation[3] = static_cast<float>(orientation[3]);
 
-  out_position = ApplyNeckModel(out_orientation, 1.0);
+  out_position_neck_ = ApplyNeckModel(out_orientation, 1.0);
+
+  out_position_new_ = position_data_->GetPosition(sensor_fusion_->GetAccelerometerUpdatedValue(), orientation);
+
+  out_position[0] = static_cast<float>(in_position_old_[0] + out_position_new_[0] + out_position_neck_[0]);
+  out_position[1] = static_cast<float>(in_position_old_[1] + out_position_new_[1] + out_position_neck_[1]);
+  out_position[2] = static_cast<float>(in_position_old_[2] + out_position_new_[2] + out_position_neck_[2]);
+
+  in_position_old_[0] = out_position_new_[0];
+  in_position_old_[1] = out_position_new_[1];
+  in_position_old_[2] = out_position_new_[2];
+
+  // out_position[0] = out_position[0] + 0.15*logCount_;
+  // out_position[1] = out_position[1] + 0.15*logCount_;
+  // out_position[2] = out_position[2] + 0.15*logCount_;
+
+  // logCount_++;
+  // if (logCount_ > 60) {
+  //   logCount_ = 0;
+  //   __android_log_print(ANDROID_LOG_INFO, "HeadTracker", "out_orientation: %f, %f, %f, %f", out_orientation[0], out_orientation[1], out_orientation[2], out_orientation[3]);
+  //   __android_log_print(ANDROID_LOG_INFO, "HeadTracker", "out_position: %f, %f, %f", out_position[0], out_position[1], out_position[2]);
+  // }
+
 }
 
 void HeadTracker::Recenter() {

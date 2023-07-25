@@ -22,6 +22,8 @@
 #include "sensors/gyroscope_data.h"
 #include "util/logging.h"
 #include "util/matrixutils.h"
+#include <android/log.h>
+
 
 namespace cardboard {
 
@@ -388,5 +390,10 @@ void SensorFusionEkf::UpdateMeasurementCovariance() {
                                           accelerometer_noise_sigma *
                                           accelerometer_noise_sigma;
 }
+
+Vector3 SensorFusionEkf::GetAccelerometerUpdatedValue() const {
+  return accelerometer_measurement_;
+}
+
 
 }  // namespace cardboard

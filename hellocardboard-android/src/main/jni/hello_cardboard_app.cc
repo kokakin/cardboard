@@ -86,6 +86,7 @@ HelloCardboardApp::HelloCardboardApp(JavaVM* vm, jobject obj,
       device_params_changed_(false),
       screen_width_(0),
       screen_height_(0),
+      logCount_(0),
       depthRenderBuffer_(0),
       framebuffer_(0),
       texture_(0),
@@ -174,10 +175,20 @@ void HelloCardboardApp::OnDrawFrame() {
 
   // Update Head Pose.
   head_view_ = GetPose();
-
   // Incorporate the floor height into the head_view
   head_view_ =
       head_view_ * GetTranslationMatrix({0.0f, kDefaultFloorHeight, 0.0f});
+
+  // logCount_++;
+  // if(logCount_ > 30) {
+
+  // __android_log_print(ANDROID_LOG_INFO, "X", "%.4f | %.4f | %.4f | %.4f ", head_view_.m[0][0], head_view_.m[0][1], head_view_.m[0][2], head_view_.m[0][3]);
+  // __android_log_print(ANDROID_LOG_INFO, "Y", "%.4f | %.4f | %.4f | %.4f ", head_view_.m[1][0], head_view_.m[1][1], head_view_.m[1][2], head_view_.m[1][3]);
+  // __android_log_print(ANDROID_LOG_INFO, "Z", "%.4f | %.4f | %.4f | %.4f ", head_view_.m[2][0], head_view_.m[2][1], head_view_.m[2][2], head_view_.m[2][3]);
+  // __android_log_print(ANDROID_LOG_INFO, "W", "%.4f | %.4f | %.4f | %.4f ", head_view_.m[3][0], head_view_.m[3][1], head_view_.m[3][2], head_view_.m[3][3]);
+  // __android_log_print(ANDROID_LOG_INFO, "-", "------------------------------------");
+  // logCount_ = 0;
+  // }
 
   // Bind buffer
   glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_);
@@ -370,8 +381,8 @@ Matrix4x4 HelloCardboardApp::GetPose() {
   CardboardHeadTracker_getPose(
       head_tracker_, GetBootTimeNano() + kPredictionTimeWithoutVsyncNanos,
       kLandscapeLeft, &out_position[0], &out_orientation[0]);
-  return GetTranslationMatrix(out_position) *
-         Quatf::FromXYZW(&out_orientation[0]).ToMatrix();
+  return Quatf::FromXYZW(&out_orientation[0]).ToMatrix() * GetTranslationMatrix(out_position);
+         
 }
 
 void HelloCardboardApp::DrawWorld() {

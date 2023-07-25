@@ -168,6 +168,8 @@ class HelloCardboardApp {
   int screen_width_;
   int screen_height_;
 
+  int logCount_;
+
   float projection_matrices_[2][16];
   float eye_matrices_[2][16];
 
