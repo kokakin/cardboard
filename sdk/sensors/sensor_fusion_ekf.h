@@ -23,6 +23,7 @@
 
 #include "sensors/accelerometer_data.h"
 #include "sensors/gyroscope_bias_estimator.h"
+#include "sensors/accelerometer_unbias_estimator.h"
 #include "sensors/gyroscope_data.h"
 #include "sensors/rotation_state.h"
 #include "util/matrix_3x3.h"
@@ -178,6 +179,8 @@ class SensorFusionEkf {
 
   // Bias estimator and static device detector.
   GyroscopeBiasEstimator gyroscope_bias_estimator_;
+
+  AccelerometerUnbiasEstimator accelerometer_unbias_estimator_;
 
   // Current bias estimate_;
   Vector3 gyroscope_bias_estimate_;

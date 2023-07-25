@@ -52,9 +52,12 @@
         </value>
       </option>
     </JavaCodeStyleSettings>
-    <XML>
-      <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
-    </XML>
+    <files>
+      <extensions>
+        <pair source="cc" header="h" fileNamingConvention="NONE" />
+        <pair source="c" header="h" fileNamingConvention="NONE" />
+      </extensions>
+    </files>
     <codeStyleSettings language="XML">
       <indentOptions>
         <option name="CONTINUATION_INDENT_SIZE" value="4" />

@@ -15,7 +15,7 @@
  */
 #include "head_tracker.h"
 
-#include "sensors/position_data.h"
+#include "sensors/position_estimator.h"
 #include "include/cardboard.h"
 #include "sensors/neck_model.h"
 #include "util/logging.h"
@@ -126,7 +126,7 @@ HeadTracker::HeadTracker()
       logCount_(0),
       out_position_neck_({0.0f, 0.0f, 0.0f}),
       out_position_new_({0.0f, 0.0f, 0.0f}),
-      position_data_(new cardboard::PositionData()),
+      position_estimator_(new PositionEstimator()),
       in_position_old_({0.0f, 0.0f, 0.0f}) {
   on_accel_callback_ = [&](const AccelerometerData& event) {
     OnAccelerometerData(event);
@@ -183,7 +183,7 @@ void HeadTracker::GetPose(int64_t timestamp_ns,
 
   out_position_neck_ = ApplyNeckModel(out_orientation, 1.0);
 
-  out_position_new_ = position_data_->GetPosition(sensor_fusion_->GetAccelerometerUpdatedValue(), orientation);
+  out_position_new_ = position_estimator_->GetPosition(sensor_fusion_->GetAccelerometerUpdatedValue(), orientation, timestamp_ns);
 
   out_position[0] = static_cast<float>(in_position_old_[0] + out_position_new_[0] + out_position_neck_[0]);
   out_position[1] = static_cast<float>(in_position_old_[1] + out_position_new_[1] + out_position_neck_[1]);

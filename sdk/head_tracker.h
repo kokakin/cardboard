@@ -20,7 +20,7 @@
 #include <memory>
 #include <mutex>  // NOLINT
 
-#include "sensors/position_data.h"
+#include "sensors/position_estimator.h"
 #include "include/cardboard.h"
 #include "sensors/accelerometer_data.h"
 #include "sensors/gyroscope_data.h"
@@ -83,7 +83,7 @@ class HeadTracker {
   // Latest gyroscope data.
   GyroscopeData latest_gyroscope_data_;
 
-  std::unique_ptr<PositionData> position_data_;
+  std::unique_ptr<PositionEstimator> position_estimator_;
 
   // Event providers supplying AccelerometerData and GyroscopeData to the
   // detector.
