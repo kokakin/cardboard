@@ -12,3 +12,6 @@ gitlog.json
 .externalNativeBuild
 
 hellocardboard-android/libraries/
+
+
+/.vscode

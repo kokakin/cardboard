@@ -156,6 +156,8 @@ void HeadTracker::GetPose(int64_t timestamp_ns,
                           CardboardViewportOrientation viewport_orientation,
                           std::array<float, 3>& out_position,
                           std::array<float, 4>& out_orientation) {
+  const Vector3 predicted_acceleration = 
+    sensor_fusion_->accelerometer_position_estimate_;
   const Vector4 orientation =
       GetRotation(viewport_orientation, timestamp_ns).GetQuaternion();
 
@@ -173,7 +175,12 @@ void HeadTracker::GetPose(int64_t timestamp_ns,
   out_orientation[2] = static_cast<float>(orientation[2]);
   out_orientation[3] = static_cast<float>(orientation[3]);
 
-  out_position = ApplyNeckModel(out_orientation, 1.0);
+  std::array<float, 3> out_accelerometer = { 1.0f, 1.0f, 1.0f };
+  out_accelerometer[0] = static_cast<float>(predicted_acceleration[0]);
+  out_accelerometer[1] = static_cast<float>(predicted_acceleration[1]);
+  out_accelerometer[2] = static_cast<float>(predicted_acceleration[2]);
+
+  out_position = ApplyNeckModel(out_orientation, 1.0, out_accelerometer);
 }
 
 void HeadTracker::Recenter() {

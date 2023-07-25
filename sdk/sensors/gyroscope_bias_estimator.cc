@@ -131,6 +131,10 @@ void GyroscopeBiasEstimator::Reset() {
   gyroscope_static_counter_->Reset();
 }
 
+Vector3 GyroscopeBiasEstimator::getAccelerometerSmoothed() const {
+  return accelerometer_lowpass_filter_.GetFilteredData();
+}
+
 void GyroscopeBiasEstimator::ProcessGyroscope(const Vector3& gyroscope_sample,
                                               uint64_t timestamp_ns) {
   // Update gyroscope and gyroscope delta low-pass filters.

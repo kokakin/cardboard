@@ -33,7 +33,7 @@ constexpr float kDefaultNeckVerticalOffset = 0.075f;     // meters in Y
 // |orientation|.
 // The value of |factor| is clamped from zero to one.
 std::array<float, 3> ApplyNeckModel(const std::array<float, 4>& orientation,
-                                    double factor);
+                                    double factor, const std::array<float, 3> predicted_acceleration_);
 
 }  // namespace cardboard
 

@@ -294,6 +294,8 @@ void SensorFusionEkf::ProcessAccelerometerSample(
   gyroscope_bias_estimator_.ProcessAccelerometer(sample.data,
                                                  sample.sensor_timestamp_ns);
 
+  accelerometer_position_estimate_ = gyroscope_bias_estimator_.getAccelerometerSmoothed()*3;
+
   if (!is_aligned_with_gravity_) {
     // This is the first accelerometer measurement so it initializes the
     // orientation estimate.

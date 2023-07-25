@@ -80,6 +80,9 @@ class GyroscopeBiasEstimator {
   virtual void ProcessAccelerometer(const Vector3& accelerometer_sample,
                                     uint64_t timestamp_ns);
 
+  virtual Vector3 getAccelerometerSmoothed() const;
+
+
   // Returns the estimated gyroscope bias.
   //
   // @return Estimated gyroscope bias. A vector with zeros is returned if no

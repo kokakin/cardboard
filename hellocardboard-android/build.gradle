@@ -5,6 +5,7 @@ android {
     lintOptions {
         abortOnError false
     }
+    namespace 'com.google.cardboard'
     defaultConfig {
         applicationId "com.google.cardboard.hellocardboard"
         // #gles3 #vulkan - You can reduce minSdkVersion down to 16 depending
