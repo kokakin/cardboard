@@ -29,7 +29,7 @@ namespace cardboard {
 class HighpassFilter {
  public:
   // Initializes a filter with the given cutoff frequency in Hz.
-  explicit HighpassFilter(double cutoff_freq_hz);
+  explicit HighpassFilter(double cutoff_freq_hz, bool velocity_filter_);
 
   // Updates the filter with the given sample. Note that samples with
   // non-monotonic timestamps and successive samples with a time steps below 1
@@ -72,7 +72,7 @@ class HighpassFilter {
 
   double sampling_frequency_;
   double cutoff_frequency_;
-  Vector3 a_1_, a_2_, b_0_, b_1_, b_2_;
+  double a_1_, a_2_, b_0_, b_1_, b_2_;
   Vector3 x_1_, x_2_, y_1_, y_2_;
 
   Vector3 filtered_data_;
