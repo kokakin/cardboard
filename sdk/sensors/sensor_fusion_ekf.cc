@@ -20,6 +20,7 @@
 
 #include "sensors/accelerometer_data.h"
 #include "sensors/linear_acceleration_data.h"
+#include "sensors/pose_6dof_data.h"
 #include "sensors/gyroscope_data.h"
 #include "util/logging.h"
 #include "util/matrixutils.h"
@@ -109,7 +110,12 @@ constexpr double ComputeTimeDifferenceInSeconds(int64_t timestamp_ns_a,
 SensorFusionEkf::SensorFusionEkf()
     : execute_reset_with_next_accelerometer_sample_(false),
       gyroscope_bias_estimate_({0, 0, 0}),
-      linear_acceleration_({0, 0, 0}) {
+      linear_acceleration_({0, 0, 0}),
+      pose_6dof_({0, 0, 0, 0,
+                  0, 0, 0,
+                  0, 0, 0, 0,
+                  0, 0, 0,
+                  0}) {
   ResetState();
 }
 
@@ -352,6 +358,25 @@ void SensorFusionEkf::ProcessLinearAccelerationSample(const LinearAccelerationDa
 
 }
 
+void SensorFusionEkf::ProcessPose6DOFSample(const Pose6DOFData& sample) {
+
+  pose_6dof_[0] = sample.data[0]; 
+  pose_6dof_[1] = sample.data[1]; 
+  pose_6dof_[2] = sample.data[2]; 
+  pose_6dof_[3] = sample.data[3];
+  pose_6dof_[4] = sample.data[4]; 
+  pose_6dof_[5] = sample.data[5]; 
+  pose_6dof_[6] = sample.data[6];
+  pose_6dof_[7] = sample.data[7]; 
+  pose_6dof_[8] = sample.data[8]; 
+  pose_6dof_[9] = sample.data[9]; 
+  pose_6dof_[10] = sample.data[10];
+  pose_6dof_[11] = sample.data[11]; 
+  pose_6dof_[12] = sample.data[12]; 
+  pose_6dof_[13] = sample.data[13];
+  pose_6dof_[14] = sample.data[14];
+}
+
 void SensorFusionEkf::UpdateStateCovariance(const Matrix3x3& motion_update) {
   state_covariance_ =
       motion_update * state_covariance_ * Transpose(motion_update);
@@ -412,5 +437,8 @@ Vector3 SensorFusionEkf::GetLinearAccelerationUpdatedValue() const {
   return linear_acceleration_;
 }
 
+std::array<double, 15> SensorFusionEkf::GetPose6DOFUpdatedValue() const {
+  return pose_6dof_;
+}
 
 }  // namespace cardboard
