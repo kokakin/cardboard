@@ -25,7 +25,6 @@ class PositionEstimator {
   std::array<double, 3> position_;
   std::array<double, 3> velocity_;
   std::array<double, 3> acceleration_;
-  std::array<float, 3> position_rotated_;
 
   HighpassFilter highpass_filter_velocity_;
   // Dsp::Elliptic::AnalogLowPass elliptic_filter_velocity_;

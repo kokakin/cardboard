@@ -19,6 +19,7 @@
 #include <cmath>
 
 #include "sensors/accelerometer_data.h"
+#include "sensors/linear_acceleration_data.h"
 #include "sensors/gyroscope_data.h"
 #include "util/logging.h"
 #include "util/matrixutils.h"
@@ -107,7 +108,8 @@ constexpr double ComputeTimeDifferenceInSeconds(int64_t timestamp_ns_a,
 
 SensorFusionEkf::SensorFusionEkf()
     : execute_reset_with_next_accelerometer_sample_(false),
-      gyroscope_bias_estimate_({0, 0, 0}) {
+      gyroscope_bias_estimate_({0, 0, 0}),
+      linear_acceleration_({0, 0, 0}) {
   ResetState();
 }
 
@@ -150,6 +152,8 @@ void SensorFusionEkf::ResetState() {
   // Reset biases.
   gyroscope_bias_estimator_.Reset();
   gyroscope_bias_estimate_ = {0, 0, 0};
+
+  linear_acceleration_ = {0, 0, 0};
 }
 
 // Here I am doing something wrong relative to time stamps. The state timestamps
@@ -342,6 +346,12 @@ void SensorFusionEkf::ProcessAccelerometerSample(
   UpdateStateCovariance(RotationMatrixNH(rotation_from_state_update));
 }
 
+void SensorFusionEkf::ProcessLinearAccelerationSample(const LinearAccelerationData& sample) {
+
+   linear_acceleration_.Set(sample.data[0], sample.data[1], sample.data[2]);
+
+}
+
 void SensorFusionEkf::UpdateStateCovariance(const Matrix3x3& motion_update) {
   state_covariance_ =
       motion_update * state_covariance_ * Transpose(motion_update);
@@ -396,6 +406,10 @@ void SensorFusionEkf::UpdateMeasurementCovariance() {
 
 Vector3 SensorFusionEkf::GetAccelerometerUpdatedValue() const {
   return accelerometer_unbias_estimator_.GetAccelerometerWithoutGravity();
+}
+
+Vector3 SensorFusionEkf::GetLinearAccelerationUpdatedValue() const {
+  return linear_acceleration_;
 }
 
 

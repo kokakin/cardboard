@@ -22,6 +22,7 @@
 #include <mutex>  // NOLINT
 
 #include "sensors/accelerometer_data.h"
+#include "sensors/linear_acceleration_data.h"
 #include "sensors/gyroscope_bias_estimator.h"
 #include "sensors/accelerometer_unbias_estimator.h"
 #include "sensors/gyroscope_data.h"
@@ -79,6 +80,8 @@ class SensorFusionEkf {
   // @param sample accelerometer sample data.
   void ProcessAccelerometerSample(const AccelerometerData& sample);
 
+  void ProcessLinearAccelerationSample(const LinearAccelerationData& sample);
+
   // Rotates the current transformation from Sensor Space to Start Space.
   //
   // @details The current state space rotation is post-multiplied by
@@ -90,6 +93,8 @@ class SensorFusionEkf {
   void RotateSensorSpaceToStartSpaceTransformation(const Rotation& rotation);
 
   Vector3 GetAccelerometerUpdatedValue() const;
+
+  Vector3 GetLinearAccelerationUpdatedValue() const;
 
  private:
   // Estimates the average timestep between gyroscope event.
@@ -181,6 +186,8 @@ class SensorFusionEkf {
   GyroscopeBiasEstimator gyroscope_bias_estimator_;
 
   AccelerometerUnbiasEstimator accelerometer_unbias_estimator_;
+
+  Vector3 linear_acceleration_;
 
   // Current bias estimate_;
   Vector3 gyroscope_bias_estimate_;

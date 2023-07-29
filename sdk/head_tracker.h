@@ -23,6 +23,7 @@
 #include "sensors/position_estimator.h"
 #include "include/cardboard.h"
 #include "sensors/accelerometer_data.h"
+#include "sensors/linear_acceleration_data.h"
 #include "sensors/gyroscope_data.h"
 #include "sensors/sensor_event_producer.h"
 #include "sensors/sensor_fusion_ekf.h"
@@ -58,6 +59,8 @@ class HeadTracker {
   //
   // @param event sensor event.
   void OnAccelerometerData(const AccelerometerData& event);
+  
+  void OnLinearAccelerationData(const LinearAccelerationData& event);
 
   // Function called when receiving GyroscopeData.
   //
@@ -88,10 +91,12 @@ class HeadTracker {
   // Event providers supplying AccelerometerData and GyroscopeData to the
   // detector.
   std::shared_ptr<SensorEventProducer<AccelerometerData>> accel_sensor_;
+  std::shared_ptr<SensorEventProducer<LinearAccelerationData>> lin_accel_sensor_;
   std::shared_ptr<SensorEventProducer<GyroscopeData>> gyro_sensor_;
 
   // Callback functions registered to the input SingleTypeEventProducer.
   std::function<void(AccelerometerData)> on_accel_callback_;
+  std::function<void(LinearAccelerationData)> on_lin_accel_callback_;
   std::function<void(GyroscopeData)> on_gyro_callback_;
 
   // Orientation of the viewport. It is initialized in the first call of
@@ -105,10 +110,6 @@ class HeadTracker {
   int logCount_;
 
   std::array<float, 3> out_position_neck_;
-  std::array<float, 3> out_position_new_;
-  std::array<float, 3> in_position_old_;
-
-
 
 };
 

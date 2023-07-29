@@ -23,6 +23,8 @@
 
 #include "sensors/accelerometer_data.h"
 #include "sensors/device_accelerometer_sensor.h"
+#include "sensors/device_linear_acceleration_sensor.h"
+#include "sensors/linear_acceleration_data.h"
 #include "sensors/device_gyroscope_sensor.h"
 #include "sensors/gyroscope_data.h"
 
@@ -113,6 +115,31 @@ void SensorEventProducer<AccelerometerData>::WorkFn() {
 }
 
 template <>
+void SensorEventProducer<LinearAccelerationData>::WorkFn() {
+  DeviceLinearAccelerationSensor sensor;
+
+  if (!sensor.Start()) {
+    return;
+  }
+
+  std::vector<LinearAccelerationData> sensor_events_vec;
+
+  // On other devices and platforms we estimate the clock bias.
+  // TODO(b/135468657): Investigate clock conversion. Old cardboard doesn't have
+  // this.
+  while (event_producer_->run_thread) {
+    sensor.PollForSensorData(kMaxWaitMilliseconds, &sensor_events_vec);
+    for (LinearAccelerationData& event : sensor_events_vec) {
+      event.system_timestamp = event.sensor_timestamp_ns;
+      if (on_event_callback_) {
+        (*on_event_callback_)(event);
+      }
+    }
+  }
+  sensor.Stop();
+}
+
+template <>
 void SensorEventProducer<GyroscopeData>::WorkFn() {
   DeviceGyroscopeSensor sensor;
 
@@ -139,6 +166,7 @@ void SensorEventProducer<GyroscopeData>::WorkFn() {
 
 // Forcing instantiation of SensorEventProducer for each sensor type.
 template class SensorEventProducer<AccelerometerData>;
+template class SensorEventProducer<LinearAccelerationData>;
 template class SensorEventProducer<GyroscopeData>;
 
 }  // namespace cardboard

@@ -175,9 +175,6 @@ void HelloCardboardApp::OnDrawFrame() {
 
   // Update Head Pose.
   head_view_ = GetPose();
-  // Incorporate the floor height into the head_view
-  head_view_ =
-      head_view_ * GetTranslationMatrix({0.0f, kDefaultFloorHeight, 0.0f});
 
   // logCount_++;
   // if(logCount_ > 30) {
@@ -206,13 +203,25 @@ void HelloCardboardApp::OnDrawFrame() {
                screen_height_);
 
     Matrix4x4 eye_matrix = GetMatrixFromGlArray(eye_matrices_[eye]);
+
     Matrix4x4 eye_view = eye_matrix * head_view_;
 
     Matrix4x4 projection_matrix =
         GetMatrixFromGlArray(projection_matrices_[eye]);
+
     Matrix4x4 modelview_target = eye_view * model_target_;
     modelview_projection_target_ = projection_matrix * modelview_target;
     modelview_projection_room_ = projection_matrix * eye_view;
+
+    // logCount_++;
+    // if(logCount_ > 30 && eye == 1) {
+    //   logCount_ = 0;
+    //   __android_log_print(ANDROID_LOG_INFO, "", "%+.5lf | %+.5lf | %+.5lf | %+.5lf", modelview_projection_room_.m[0][0], modelview_projection_room_.m[0][1], modelview_projection_room_.m[0][2], modelview_projection_room_.m[0][3]);
+    //   __android_log_print(ANDROID_LOG_INFO, "", "%+.5lf | %+.5lf | %+.5lf | %+.5lf", modelview_projection_room_.m[1][0], modelview_projection_room_.m[1][1], modelview_projection_room_.m[1][2], modelview_projection_room_.m[1][3]);
+    //   __android_log_print(ANDROID_LOG_INFO, "", "%+.5lf | %+.5lf | %+.5lf | %+.5lf", modelview_projection_room_.m[2][0], modelview_projection_room_.m[2][1], modelview_projection_room_.m[2][2], modelview_projection_room_.m[2][3]);
+    //   __android_log_print(ANDROID_LOG_INFO, "", "%+.5lf | %+.5lf | %+.5lf | %+.5lf", modelview_projection_room_.m[3][0], modelview_projection_room_.m[3][1], modelview_projection_room_.m[3][2], modelview_projection_room_.m[3][3]);
+    //   __android_log_print(ANDROID_LOG_INFO, "", "------------------------------------");
+    // }
 
     // Draw room and target
     DrawWorld();
@@ -381,8 +390,7 @@ Matrix4x4 HelloCardboardApp::GetPose() {
   CardboardHeadTracker_getPose(
       head_tracker_, GetBootTimeNano() + kPredictionTimeWithoutVsyncNanos,
       kLandscapeLeft, &out_position[0], &out_orientation[0]);
-  return Quatf::FromXYZW(&out_orientation[0]).ToMatrix() * GetTranslationMatrix(out_position);
-         
+  return Quatf::FromXYZW(&out_orientation[0]).ToMatrix() * GetTranslationMatrix(out_position);       
 }
 
 void HelloCardboardApp::DrawWorld() {

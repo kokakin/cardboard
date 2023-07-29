@@ -121,15 +121,17 @@ HeadTracker::HeadTracker()
       sensor_fusion_(new SensorFusionEkf()),
       latest_gyroscope_data_({0, 0, Vector3::Zero()}),
       accel_sensor_(new SensorEventProducer<AccelerometerData>()),
+      lin_accel_sensor_(new SensorEventProducer<LinearAccelerationData>()),
       gyro_sensor_(new SensorEventProducer<GyroscopeData>()),
       is_viewport_orientation_initialized_(false),
       logCount_(0),
       out_position_neck_({0.0f, 0.0f, 0.0f}),
-      out_position_new_({0.0f, 0.0f, 0.0f}),
-      position_estimator_(new PositionEstimator()),
-      in_position_old_({0.0f, 0.0f, 0.0f}) {
+      position_estimator_(new PositionEstimator()) {
   on_accel_callback_ = [&](const AccelerometerData& event) {
     OnAccelerometerData(event);
+  };
+  on_lin_accel_callback_ = [&](const LinearAccelerationData& event) {
+    OnLinearAccelerationData(event);
   };
   on_gyro_callback_ = [&](const GyroscopeData& event) {
     OnGyroscopeData(event);
@@ -181,25 +183,19 @@ void HeadTracker::GetPose(int64_t timestamp_ns,
   out_orientation[2] = static_cast<float>(orientation[2]);
   out_orientation[3] = static_cast<float>(orientation[3]);
 
-  out_position_neck_ = ApplyNeckModel(out_orientation, 1.0);
+  Vector3 out_accel_ = sensor_fusion_->GetAccelerometerUpdatedValue();
+  // Vector3 out_lin_accel_ = sensor_fusion_->GetLinearAccelerationUpdatedValue();
+  // Vector3 accel_final_;
+  // accel_final_[0] = 0.5f*out_lin_accel_[0]*0.1f + out_accel_[0]*0.9f;
+  // accel_final_[1] = 0.5f*out_lin_accel_[1]*0.1f + out_accel_[1]*0.9f;
+  // accel_final_[2] = 0.5f*out_lin_accel_[2]*0.1f + out_accel_[2]*0.9f;
 
-  out_position_new_ = position_estimator_->GetPosition(sensor_fusion_->GetAccelerometerUpdatedValue(), orientation, timestamp_ns);
-
-  out_position[0] = static_cast<float>(in_position_old_[0] + out_position_new_[0] + out_position_neck_[0]);
-  out_position[1] = static_cast<float>(in_position_old_[1] + out_position_new_[1] + out_position_neck_[1]);
-  out_position[2] = static_cast<float>(in_position_old_[2] + out_position_new_[2] + out_position_neck_[2]);
-
-  in_position_old_[0] = out_position_new_[0];
-  in_position_old_[1] = out_position_new_[1];
-  in_position_old_[2] = out_position_new_[2];
-
-  // out_position[0] = out_position[0] + 0.15*logCount_;
-  // out_position[1] = out_position[1] + 0.15*logCount_;
-  // out_position[2] = out_position[2] + 0.15*logCount_;
+  out_position = position_estimator_->GetPosition(out_accel_, orientation, timestamp_ns);
 
   // logCount_++;
-  // if (logCount_ > 60) {
+  // if (logCount_ > 10) {
   //   logCount_ = 0;
+  //   __android_log_print(ANDROID_LOG_INFO, "HeadTracker accel", "%+f, %+f, %+f", out_accel_[0], out_accel_[1], out_accel_[2]);
   //   __android_log_print(ANDROID_LOG_INFO, "HeadTracker", "out_orientation: %f, %f, %f, %f", out_orientation[0], out_orientation[1], out_orientation[2], out_orientation[3]);
   //   __android_log_print(ANDROID_LOG_INFO, "HeadTracker", "out_position: %f, %f, %f", out_position[0], out_position[1], out_position[2]);
   // }
@@ -212,11 +208,13 @@ void HeadTracker::Recenter() {
 
 void HeadTracker::RegisterCallbacks() {
   accel_sensor_->StartSensorPolling(&on_accel_callback_);
+  lin_accel_sensor_->StartSensorPolling(&on_lin_accel_callback_);
   gyro_sensor_->StartSensorPolling(&on_gyro_callback_);
 }
 
 void HeadTracker::UnregisterCallbacks() {
   accel_sensor_->StopSensorPolling();
+  lin_accel_sensor_->StopSensorPolling();
   gyro_sensor_->StopSensorPolling();
 }
 
@@ -225,6 +223,14 @@ void HeadTracker::OnAccelerometerData(const AccelerometerData& event) {
     return;
   }
   sensor_fusion_->ProcessAccelerometerSample(event);
+}
+
+void HeadTracker::OnLinearAccelerationData(
+    const LinearAccelerationData& event) {
+  if (!is_tracking_) {
+    return;
+  }
+  sensor_fusion_->ProcessLinearAccelerationSample(event);
 }
 
 void HeadTracker::OnGyroscopeData(const GyroscopeData& event) {
