@@ -170,45 +170,44 @@ void HeadTracker::GetPose(int64_t timestamp_ns,
                           CardboardViewportOrientation viewport_orientation,
                           std::array<float, 3>& out_position,
                           std::array<float, 4>& out_orientation) {
-  const Vector4 orientation =
-      GetRotation(viewport_orientation, timestamp_ns).GetQuaternion();
 
+  //viewport_orientation is always kLandScapeLeft
   if (is_viewport_orientation_initialized_ &&
       viewport_orientation != viewport_orientation_) {
     sensor_fusion_->RotateSensorSpaceToStartSpaceTransformation(
         ViewportChangeRotationCompensation()[viewport_orientation_]
                                             [viewport_orientation]);
+    __android_log_print(ANDROID_LOG_INFO, "HeadTracker", "Viewport changed");
   }
   viewport_orientation_ = viewport_orientation;
   is_viewport_orientation_initialized_ = true;
 
-  out_orientation[0] = static_cast<float>(orientation[0]);
-  out_orientation[1] = static_cast<float>(orientation[1]);
-  out_orientation[2] = static_cast<float>(orientation[2]);
-  out_orientation[3] = static_cast<float>(orientation[3]);
+  const Rotation predicted_rotation_ = Rotation::FromQuaternion(Rotation::QuaternionType(
+          0., 0., 0.7071067811865476, 0.7071067811865476)) * sensor_fusion_->PredictRotation(timestamp_ns);
+  const Vector4 predicted_rotation_quaternion_ = predicted_rotation_.GetQuaternion();
+
+  const Vector4 orientation_ =
+      GetRotation(viewport_orientation, timestamp_ns).GetQuaternion();
+
+  out_orientation[0] = static_cast<float>(orientation_[0]);
+  out_orientation[1] = static_cast<float>(orientation_[1]);
+  out_orientation[2] = static_cast<float>(orientation_[2]);
+  out_orientation[3] = static_cast<float>(orientation_[3]);
 
   Vector3 out_accel_ = sensor_fusion_->GetAccelerometerUpdatedValue();
   
   // Vector3 out_lin_accel_ = sensor_fusion_->GetLinearAccelerationUpdatedValue();
-  // Vector3 accel_final_;
-  // accel_final_[0] = 0.5f*out_lin_accel_[0]*0.1f + out_accel_[0]*0.9f;
-  // accel_final_[1] = 0.5f*out_lin_accel_[1]*0.1f + out_accel_[1]*0.9f;
-  // accel_final_[2] = 0.5f*out_lin_accel_[2]*0.1f + out_accel_[2]*0.9f;
 
-  out_position = position_estimator_->GetPosition(out_accel_, orientation, timestamp_ns);
-  std::array<double, 15> out_everything_ = sensor_fusion_->GetPose6DOFUpdatedValue();
-  // logCount_++;
-  // if (logCount_ > 30) {
-  //   logCount_ = 0;
-  // //   __android_log_print(ANDROID_LOG_INFO, "HeadTracker accel", "%+f, %+f, %+f", out_accel_[0], out_accel_[1], out_accel_[2]);
-  // //   __android_log_print(ANDROID_LOG_INFO, "HeadTracker", "out_orientation: %f, %f, %f, %f", out_orientation[0], out_orientation[1], out_orientation[2], out_orientation[3]);
-  // //   __android_log_print(ANDROID_LOG_INFO, "HeadTracker", "out_position: %f, %f, %f", out_position[0], out_position[1], out_position[2]);
-  //   __android_log_print(ANDROID_LOG_INFO, "HeadTracker 0-3", "%+.5lf, %+.5lf, %+.5lf, %+.5lf", out_everything_[0], out_everything_[1], out_everything_[2], out_everything_[3]);
-  //   __android_log_print(ANDROID_LOG_INFO, "HeadTracker 4-6", "%+.5lf, %+.5lf, %+.5lf", out_everything_[4], out_everything_[5], out_everything_[6]);
-  //   __android_log_print(ANDROID_LOG_INFO, "HeadTracker 7-10", "%+.5lf, %+.5lf, %+.5lf, %+.5lf", out_everything_[7], out_everything_[8], out_everything_[9], out_everything_[10]);
-  //   __android_log_print(ANDROID_LOG_INFO, "HeadTracker 11-13", "%+.5lf, %+.5lf, %+.5lf", out_everything_[11], out_everything_[12], out_everything_[13]);
-  //   __android_log_print(ANDROID_LOG_INFO, "HeadTracker 14", "%+.5lf", out_everything_[14]);
-  // }
+  out_position = position_estimator_->GetPosition(out_accel_, predicted_rotation_quaternion_, timestamp_ns);//{0.0f, -2.0f, 0.0f};//
+  
+  logCount_++;
+  if (logCount_ > 30) {
+    logCount_ = 0;
+    // __android_log_print(ANDROID_LOG_INFO, "HeadTracker accel", "%+f, %+f, %+f", out_accel_[0], out_accel_[1], out_accel_[2]);
+    // __android_log_print(ANDROID_LOG_INFO, "HeadTracker Orientation", "%+.5lf, %+.5lf, %+.5lf, %+.5lf", orientation_[0], orientation_[1], orientation_[2], orientation_[3]);
+    __android_log_print(ANDROID_LOG_INFO, "HeadTracker predictedOrientation", "%+.5lf, %+.5lf, %+.5lf, %+.5lf", predicted_rotation_quaternion_[0], predicted_rotation_quaternion_[1], predicted_rotation_quaternion_[2], predicted_rotation_quaternion_[3]);
+    // __android_log_print(ANDROID_LOG_INFO, "HeadTracker", "out_position: %f, %f, %f", out_position[0], out_position[1], out_position[2]);
+  }
 
 
 
@@ -269,12 +268,15 @@ Rotation HeadTracker::GetRotation(
   const Rotation predicted_rotation =
       sensor_fusion_->PredictRotation(timestamp_ns);
 
+  // __android_log_print(ANDROID_LOG_INFO, "SensorToDisplayRotations", "%+.5f, %+.5f, %+.5f, %+.5f", SensorToDisplayRotations()[viewport_orientation].GetQuaternion()[0], SensorToDisplayRotations()[viewport_orientation].GetQuaternion()[1], SensorToDisplayRotations()[viewport_orientation].GetQuaternion()[2], SensorToDisplayRotations()[viewport_orientation].GetQuaternion()[3]);
+  // __android_log_print(ANDROID_LOG_INFO, "predicted_rotation", "%+.5f, %+.5f, %+.5f, %+.5f", predicted_rotation.GetQuaternion()[0], predicted_rotation.GetQuaternion()[1], predicted_rotation.GetQuaternion()[2], predicted_rotation.GetQuaternion()[3]);
+  // __android_log_print(ANDROID_LOG_INFO, "EkfToHeadTrackerRotations", "%+.5f, %+.5f, %+.5f, %+.5f", EkfToHeadTrackerRotations()[viewport_orientation].GetQuaternion()[0], EkfToHeadTrackerRotations()[viewport_orientation].GetQuaternion()[1], EkfToHeadTrackerRotations()[viewport_orientation].GetQuaternion()[2], EkfToHeadTrackerRotations()[viewport_orientation].GetQuaternion()[3]);
+
   // In order to update our pose as the sensor changes, we begin with the
   // inverse default orientation (the orientation returned by a reset sensor,
   // i.e. since the last Reset() call), apply the current sensor transformation,
   // and then transform into display space.
-  return SensorToDisplayRotations()[viewport_orientation] * predicted_rotation *
-         EkfToHeadTrackerRotations()[viewport_orientation];
+  return SensorToDisplayRotations()[viewport_orientation] * predicted_rotation * EkfToHeadTrackerRotations()[viewport_orientation];
 }
 
 }  // namespace cardboard

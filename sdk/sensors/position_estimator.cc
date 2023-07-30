@@ -41,9 +41,9 @@ std::array<float, 3> PositionEstimator::GetPosition( Vector3 acceleration_update
         return {static_cast<float>(position_[0]), static_cast<float>(position_[1]), static_cast<float>(position_[2])};
     }
 
-    Rotation rotation = Rotation::FromQuaternion(
-     Vector4({orientation_[0], orientation_[1], orientation_[2], orientation_[3]}));
-     const Vector3 acceleration_rotated_ = rotation * Vector3(acceleration_updated_value_[0], acceleration_updated_value_[1], acceleration_updated_value_[2]);
+    Rotation rotation = Rotation::FromQuaternion(Vector4({orientation_[0], orientation_[1], orientation_[2], orientation_[3]}));
+    
+    const Vector3 acceleration_rotated_ = rotation * Vector3(-acceleration_updated_value_[2], acceleration_updated_value_[1], acceleration_updated_value_[0]);
 
     acceleration_[0] = acceleration_rotated_[0];
     acceleration_[1] = acceleration_rotated_[1];
@@ -80,15 +80,17 @@ std::array<float, 3> PositionEstimator::GetPosition( Vector3 acceleration_update
     old_position_[1] = position_[1];
     old_position_[2] = position_[2];
 
-    // log_count_++;
-    // if (log_count_ > 60) {
-    // __android_log_print(ANDROID_LOG_INFO, "Acceleration", "%+.4lf, %+.4lf, %+.4lf", acceleration_updated_value_[0], acceleration_updated_value_[1], acceleration_updated_value_[2]);
-    // __android_log_print(ANDROID_LOG_INFO, "Orientation", "%+.4f, %+.4f, %+.4f, %+.4f", orientation_[0], orientation_[1], orientation_[2], orientation_[3]);
-    // __android_log_print(ANDROID_LOG_INFO, "Acceleration_Rot", "%+.4lf, %+.4lf, %+.4lf", acceleration_[0], acceleration_[1], acceleration_[2]);
+    log_count_++;
+    if (log_count_ > 30) {
+    log_count_ = 0;
+    // // __android_log_print(ANDROID_LOG_INFO, "Acceleration", "%+.4lf, %+.4lf, %+.4lf", acceleration_updated_value_[0], acceleration_updated_value_[1], acceleration_updated_value_[2]);
+    // // __android_log_print(ANDROID_LOG_INFO, "Acceleration_Rot", "%+.4lf, %+.4lf, %+.4lf", acceleration_[0], acceleration_[1], acceleration_[2]);
     // // __android_log_print(ANDROID_LOG_INFO, "Velocity", "%lf, %lf, %lf", velocity_[0], velocity_[1], velocity_[2]);
     // // __android_log_print(ANDROID_LOG_INFO, "Position", "%lf, %lf, %lf", position_[0], position_[1], position_[2]);
-    // log_count_ = 0;
-    // }
+
+    __android_log_print(ANDROID_LOG_INFO, "Orientation", "%+.5f, %+.5f, %+.5f, %+.5f", orientation_[0], orientation_[1], orientation_[2], orientation_[3]);
+    __android_log_print(ANDROID_LOG_INFO, "Rotation", "%+.5lf, %+.5lf, %+.5lf, %+.5lf", rotation.GetQuaternion()[0], rotation.GetQuaternion()[1], rotation.GetQuaternion()[2], rotation.GetQuaternion()[3]);
+    }
 
     if(position_[0] < -5 || position_[0] > 5) {
         position_[0] = 0.0;

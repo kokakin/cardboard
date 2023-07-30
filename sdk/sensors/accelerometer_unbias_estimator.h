@@ -7,7 +7,6 @@
 
 
 #include "sensors/highpass_filter.h"
-#include "sensors/lowpass_filter.h"
 
 
 namespace cardboard {
@@ -23,16 +22,14 @@ namespace cardboard {
         void Reset();
 
         Vector3 GetAccelerometerWithoutGravity() const {
-            return accelerometer_minus_gravity_lowpass_;
+            return accelerometer_minus_gravity_;
         }
 
         private:
 
           HighpassFilter accelerometer_highpass_filter_;
-          LowpassFilter accelerometer_lowpass_filter_;
 
           Vector3 accelerometer_minus_gravity_;
-          Vector3 accelerometer_minus_gravity_lowpass_;
 
     };
 
