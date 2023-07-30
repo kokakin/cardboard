@@ -176,16 +176,7 @@ void HelloCardboardApp::OnDrawFrame() {
   // Update Head Pose.
   head_view_ = GetPose();
 
-  // logCount_++;
-  // if(logCount_ > 30) {
-
-  // __android_log_print(ANDROID_LOG_INFO, "X", "%.4f | %.4f | %.4f | %.4f ", head_view_.m[0][0], head_view_.m[0][1], head_view_.m[0][2], head_view_.m[0][3]);
-  // __android_log_print(ANDROID_LOG_INFO, "Y", "%.4f | %.4f | %.4f | %.4f ", head_view_.m[1][0], head_view_.m[1][1], head_view_.m[1][2], head_view_.m[1][3]);
-  // __android_log_print(ANDROID_LOG_INFO, "Z", "%.4f | %.4f | %.4f | %.4f ", head_view_.m[2][0], head_view_.m[2][1], head_view_.m[2][2], head_view_.m[2][3]);
-  // __android_log_print(ANDROID_LOG_INFO, "W", "%.4f | %.4f | %.4f | %.4f ", head_view_.m[3][0], head_view_.m[3][1], head_view_.m[3][2], head_view_.m[3][3]);
-  // __android_log_print(ANDROID_LOG_INFO, "-", "------------------------------------");
-  // logCount_ = 0;
-  // }
+  head_view_ = head_view_ * GetTranslationMatrix({0, kDefaultFloorHeight, 0});
 
   // Bind buffer
   glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_);
@@ -212,16 +203,6 @@ void HelloCardboardApp::OnDrawFrame() {
     Matrix4x4 modelview_target = eye_view * model_target_;
     modelview_projection_target_ = projection_matrix * modelview_target;
     modelview_projection_room_ = projection_matrix * eye_view;
-
-    // logCount_++;
-    // if(logCount_ > 30 && eye == 1) {
-    //   logCount_ = 0;
-    //   __android_log_print(ANDROID_LOG_INFO, "", "%+.5lf | %+.5lf | %+.5lf | %+.5lf", modelview_projection_room_.m[0][0], modelview_projection_room_.m[0][1], modelview_projection_room_.m[0][2], modelview_projection_room_.m[0][3]);
-    //   __android_log_print(ANDROID_LOG_INFO, "", "%+.5lf | %+.5lf | %+.5lf | %+.5lf", modelview_projection_room_.m[1][0], modelview_projection_room_.m[1][1], modelview_projection_room_.m[1][2], modelview_projection_room_.m[1][3]);
-    //   __android_log_print(ANDROID_LOG_INFO, "", "%+.5lf | %+.5lf | %+.5lf | %+.5lf", modelview_projection_room_.m[2][0], modelview_projection_room_.m[2][1], modelview_projection_room_.m[2][2], modelview_projection_room_.m[2][3]);
-    //   __android_log_print(ANDROID_LOG_INFO, "", "%+.5lf | %+.5lf | %+.5lf | %+.5lf", modelview_projection_room_.m[3][0], modelview_projection_room_.m[3][1], modelview_projection_room_.m[3][2], modelview_projection_room_.m[3][3]);
-    //   __android_log_print(ANDROID_LOG_INFO, "", "------------------------------------");
-    // }
 
     // Draw room and target
     DrawWorld();

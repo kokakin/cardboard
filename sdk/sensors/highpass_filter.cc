@@ -47,11 +47,11 @@ HighpassFilter::HighpassFilter(double cutoff_freq_hz, bool velocity_filter_)
         double v0 = 1.0 / (1.0 + epsilon);
 
         if(velocity_filter_){
-          b_0_ = 0.1045785204912173;
-          b_1_ = 0.2091037885058813;
-          b_2_ = 0.1045785204912172;
-          a_1_ = -0.9688220548026436;
-          a_2_ = 0.4953812418035914; 
+          b_0_ = 0.1362835867548736;
+          b_1_ = 0.2725191945234873;
+          b_2_ = 0.1362835867548736;
+          a_1_ = -0.7669774525135551;
+          a_2_ = 0.4532005328531817; 
         }
         else {
           b_0_ = 0.09330921180937071;
@@ -91,34 +91,18 @@ void HighpassFilter::AddWeightedSample(const Vector3& sample,
     return;
   }
 
-  filtered_data_[0] = b_0_ * sample[0] + b_1_ * x_1_[0] + b_2_ * x_2_[0] - a_1_ * y_1_[0] - a_2_ * y_2_[0];
-  x_2_[0] = x_1_[0];
-  x_1_[0] = sample[0];
-  y_2_[0] = y_1_[0];
-  y_1_[0] = filtered_data_[0];
+  filtered_data_ = b_0_ * sample + b_1_ * x_1_ + b_2_ * x_2_ - a_1_ * y_1_ - a_2_ * y_2_;
+  x_2_ = x_1_;
+  x_1_ = sample;
+  y_2_ = y_1_;
+  y_1_ = filtered_data_;
   
-  filtered_data_[1] = b_0_ * sample[1] + b_1_ * x_1_[1] + b_2_ * x_2_[1] - a_1_ * y_1_[1] - a_2_ * y_2_[1];
-  x_2_[1] = x_1_[1];
-  x_1_[1] = sample[1];
-  y_2_[1] = y_1_[1];
-  y_1_[1] = filtered_data_[1];
-  
-  filtered_data_[2] = b_0_ * sample[2] + b_1_ * x_1_[2] + b_2_ * x_2_[2] - a_1_ * y_1_[2] - a_2_ * y_2_[2];
-  x_2_[2] = x_1_[2];
-  x_1_[2] = sample[2];
-  y_2_[2] = y_1_[2];
-  y_1_[2] = filtered_data_[2];
-
   timestamp_most_recent_update_ns_ = timestamp_ns;
 }
 
 void HighpassFilter::Reset() {
   initialized_ = false;
-  filtered_data_ = {0, 0, 0};
-  x_1_[0] = x_2_[0] = y_1_[0] = y_2_[0] = 0.0;
-  x_1_[1] = x_2_[1] = y_1_[1] = y_2_[1] = 0.0;
-  x_1_[2] = x_2_[2] = y_1_[2] = y_2_[2] = 0.0;
-
+  filtered_data_ = x_1_ = x_2_ = y_1_ = y_2_ = {0, 0, 0};
 }
 
 }  // namespace cardboard
