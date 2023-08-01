@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef CARDBOARD_SDK_SENSORS_HIGHPASS_FILTER_H_
-#define CARDBOARD_SDK_SENSORS_HIGHPASS_FILTER_H_
+#ifndef CARDBOARD_SDK_SENSORS_CAUER_FILTER_H_
+#define CARDBOARD_SDK_SENSORS_CAUER_FILTER_H_
 
 #include <array>
 #include <memory>
@@ -23,13 +23,11 @@
 
 namespace cardboard {
 
-// Implements an IIR, first order, low pass filter over vectors of the given
-// dimension = 3.
-// See http://en.wikipedia.org/wiki/Low-pass_filter
-class HighpassFilter {
+// Implements an IIR, second order
+class CauerFilter {
  public:
-  // Initializes a filter with the given cutoff frequency in Hz.
-  explicit HighpassFilter(double cutoff_freq_hz, bool velocity_filter_);
+  // Initializes a filter with the given poles and zeros.
+  explicit CauerFilter(std::array<double, 3> b_, std::array<double, 3> a_);
 
   // Updates the filter with the given sample. Note that samples with
   // non-monotonic timestamps and successive samples with a time steps below 1
@@ -66,7 +64,11 @@ class HighpassFilter {
   void Reset();
 
  private:
-  const double cutoff_time_constant_;
+
+  // Filter coefficients.
+  void FindAndSetCoefficients();
+
+  // const double cutoff_time_constant_;
   uint64_t timestamp_most_recent_update_ns_;
   bool initialized_;
 
@@ -80,4 +82,4 @@ class HighpassFilter {
 
 }  // namespace cardboard
 
-#endif  // CARDBOARD_SDK_SENSORS_HIGHPASS_FILTER_H_
+#endif  // CARDBOARD_SDK_SENSORS_CAUER_FILTER_H_

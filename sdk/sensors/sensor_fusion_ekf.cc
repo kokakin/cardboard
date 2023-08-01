@@ -306,9 +306,6 @@ void SensorFusionEkf::ProcessAccelerometerSample(
   gyroscope_bias_estimator_.ProcessAccelerometer(sample.data,
                                                  sample.sensor_timestamp_ns);
 
-  accelerometer_unbias_estimator_.ProcessAccelerometer(sample.data,
-                                                 sample.sensor_timestamp_ns);
-
   if (!is_aligned_with_gravity_) {
     // This is the first accelerometer measurement so it initializes the
     // orientation estimate.
@@ -429,8 +426,8 @@ void SensorFusionEkf::UpdateMeasurementCovariance() {
                                           accelerometer_noise_sigma;
 }
 
-Vector3 SensorFusionEkf::GetAccelerometerUpdatedValue() const {
-  return accelerometer_unbias_estimator_.GetAccelerometerWithoutGravity();
+Vector3 SensorFusionEkf::GetAccelerometerValue() const {
+  return accelerometer_measurement_;
 }
 
 Vector3 SensorFusionEkf::GetLinearAccelerationUpdatedValue() const {

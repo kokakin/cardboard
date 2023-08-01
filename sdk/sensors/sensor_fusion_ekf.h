@@ -25,7 +25,6 @@
 #include "sensors/linear_acceleration_data.h"
 #include "sensors/pose_6dof_data.h"
 #include "sensors/gyroscope_bias_estimator.h"
-#include "sensors/accelerometer_unbias_estimator.h"
 #include "sensors/gyroscope_data.h"
 #include "sensors/rotation_state.h"
 #include "util/matrix_3x3.h"
@@ -95,7 +94,7 @@ class SensorFusionEkf {
   //                 frame to Start Space.
   void RotateSensorSpaceToStartSpaceTransformation(const Rotation& rotation);
 
-  Vector3 GetAccelerometerUpdatedValue() const;
+  Vector3 GetAccelerometerValue() const;
 
   Vector3 GetLinearAccelerationUpdatedValue() const;
 
@@ -189,8 +188,6 @@ class SensorFusionEkf {
 
   // Bias estimator and static device detector.
   GyroscopeBiasEstimator gyroscope_bias_estimator_;
-
-  AccelerometerUnbiasEstimator accelerometer_unbias_estimator_;
 
   Vector3 linear_acceleration_;
 

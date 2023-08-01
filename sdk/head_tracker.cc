@@ -194,7 +194,7 @@ void HeadTracker::GetPose(int64_t timestamp_ns,
   out_orientation[2] = static_cast<float>(orientation_[2]);
   out_orientation[3] = static_cast<float>(orientation_[3]);
 
-  Vector3 out_accel_ = sensor_fusion_->GetAccelerometerUpdatedValue();
+  Vector3 out_accel_ = sensor_fusion_->GetAccelerometerValue();
   
   // Vector3 out_lin_accel_ = sensor_fusion_->GetLinearAccelerationUpdatedValue();
 

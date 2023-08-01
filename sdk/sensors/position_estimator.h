@@ -3,8 +3,7 @@
 #ifndef CARDBOARD_SDK_SENSORS_POSITION_ESTIMATOR_H_
 #define CARDBOARD_SDK_SENSORS_POSITION_ESTIMATOR_H_
 
-#include "sensors/highpass_filter.h"
-// #include "sensors/dsp-filters/Elliptic.h"
+#include "sensors/cauer_filter.h"
 
 #include <array>
 #include <memory>
@@ -16,21 +15,27 @@ class PositionEstimator {
   PositionEstimator();
   virtual ~PositionEstimator();
 
-  std::array<float, 3> GetPosition(Vector3 acceleration_updated_value, Vector4 orientation, int64_t timestamp_ns_);
+  std::array<float, 3> GetPosition(Vector3 accelerometer_sample_, Vector4 orientation, int64_t timestamp_ns_);
 
  private:
+
+  bool StableValueStream( double new_value_, double old_value_, double threshold);
+
+  Vector3 accelerometer_sample_filtered_;
+  Vector4 old_orientation_;
   Vector3 old_position_;
   Vector3 old_velocity_;
   Vector3 old_acceleration_;
+  Vector3 older_acceleration_;
   Vector3 position_;
   Vector3 velocity_;
   Vector3 acceleration_;
-  Vector4 old_orientation_;
 
-  HighpassFilter highpass_filter_velocity_;
-  // Dsp::Elliptic::AnalogLowPass elliptic_filter_velocity_;
+  // CauerFilter filter_jerk_;
+  CauerFilter filter_accelerometer_;
+  CauerFilter filter_velocity_;
 
-  int64_t past_timestamp_ns_;
+  int64_t old_timestamp_ns_;
 
   int log_count_;
 
