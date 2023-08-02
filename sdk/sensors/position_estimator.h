@@ -4,6 +4,7 @@
 #define CARDBOARD_SDK_SENSORS_POSITION_ESTIMATOR_H_
 
 #include "sensors/cauer_filter.h"
+#include "sensors/iir_filter_4.h"
 
 #include <array>
 #include <memory>
@@ -19,8 +20,15 @@ class PositionEstimator {
 
  private:
 
-  bool StableValueStream( double new_value_, double old_value_, double threshold);
+  const double kThresholdAccelerationStable = 0.11;
 
+  bool StableValueStream( double new_value_, double old_value_, double threshold );
+
+  bool ApproximateEqual( double new_value_, double old_value_, double threshold );
+
+  Vector3 old_accelerometer_sample_;
+  Vector3 older_accelerometer_sample_;
+  Vector3 even_older_accelerometer_sample_;
   Vector3 accelerometer_sample_filtered_;
   Vector4 old_orientation_;
   Vector3 old_position_;
@@ -31,9 +39,11 @@ class PositionEstimator {
   Vector3 velocity_;
   Vector3 acceleration_;
 
+  Vector3 mean_acceleration_;
+
   // CauerFilter filter_jerk_;
   CauerFilter filter_accelerometer_;
-  CauerFilter filter_velocity_;
+  IIRFilter4 filter_velocity_;
 
   int64_t old_timestamp_ns_;
 
