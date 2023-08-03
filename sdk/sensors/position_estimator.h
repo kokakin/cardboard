@@ -20,7 +20,7 @@ class PositionEstimator {
 
  private:
 
-  const double kThresholdAccelerationStable = 0.11;
+  const double kThresholdAccelerationStable = 0.09;
 
   bool StableValueStream( double new_value_, double old_value_, double threshold );
 

@@ -124,7 +124,7 @@ std::array<float, 3> PositionEstimator::GetPosition( Vector3 accelerometer_sampl
 
     Vector3 accelerometer_sample_filtered_ = accelerometer_sample_ - mean_acceleration_;
 
-    acceleration_ = 1 * (Rotation::FromQuaternion(orientation_) * Vector3(-accelerometer_sample_filtered_[2], accelerometer_sample_filtered_[1], accelerometer_sample_filtered_[0]));// + 0.3*(old_acceleration_) + 0.2*(older_acceleration_);
+    acceleration_ = 0.5 * (Rotation::FromQuaternion(orientation_) * Vector3(-accelerometer_sample_filtered_[2], accelerometer_sample_filtered_[1], accelerometer_sample_filtered_[0])) + 0.3*(old_acceleration_) + 0.2*(older_acceleration_);
 
     // if (!StableValueStream(acceleration_[0], old_acceleration_[0], 0.3)) {
     //     __android_log_print(ANDROID_LOG_INFO, "Jerk Too HighX", "%lf", (std::abs(acceleration_[0]) + std::abs(old_acceleration_[0]))/(std::abs(old_acceleration_[0]) + std::abs(old_acceleration_[0])));
@@ -136,19 +136,19 @@ std::array<float, 3> PositionEstimator::GetPosition( Vector3 accelerometer_sampl
     //     __android_log_print(ANDROID_LOG_INFO, "Jerk Too HighZ", "%lf", (std::abs(acceleration_[2]) + std::abs(old_acceleration_[2]))/(std::abs(old_acceleration_[2]) + std::abs(old_acceleration_[2])));
     // }
 
-    velocity_ = old_velocity_ + (acceleration_) * timestamp_s_*14;
+    velocity_ = old_velocity_ + (acceleration_) * timestamp_s_*13;
 
     filter_velocity_.AddSample(velocity_, timestamp_ns_);
-    Vector3 velocity_filtered_ = filter_velocity_.GetFilteredData()*0.5 + old_velocity_*0.5;
+    Vector3 velocity_filtered_ = filter_velocity_.GetFilteredData() * 0.5 + old_velocity_ * 0.5;
     
-    position_ = old_position_ + 0.5* (velocity_filtered_ + old_velocity_) * timestamp_s_*14;
-
-    old_acceleration_ = acceleration_;
-    older_acceleration_ = old_acceleration_;
+    position_ = old_position_ + 0.5* (velocity_filtered_ + old_velocity_) * timestamp_s_*13;
 
     old_accelerometer_sample_ = accelerometer_sample_;
     older_accelerometer_sample_ = old_accelerometer_sample_;
     even_older_accelerometer_sample_ = older_accelerometer_sample_;
+
+    old_acceleration_ = acceleration_;
+    older_acceleration_ = old_acceleration_;
 
     old_velocity_ = velocity_filtered_;
     old_position_ = position_;
@@ -156,20 +156,20 @@ std::array<float, 3> PositionEstimator::GetPosition( Vector3 accelerometer_sampl
     old_orientation_ = orientation_;
     old_timestamp_ns_ = timestamp_ns_;
 
-    // log_count_++;
-    // if (log_count_ > 30) {
-    // log_count_ = 0;
-    // // __android_log_print(ANDROID_LOG_INFO, "Acceleration", "%+4.5lf, %+4.5lf, %+4.5lf", accelerometer_sample_[0], accelerometer_sample_[1], accelerometer_sample_[2]);
-    // // __android_log_print(ANDROID_LOG_INFO, "AccelerationF", "%+4.5lf, %+4.5lf, %+4.5lf", accelerometer_sample_filtered_[0], accelerometer_sample_filtered_[1], accelerometer_sample_filtered_[2]);
-    // // __android_log_print(ANDROID_LOG_INFO, "AccelerationMean", "%+4.5lf, %+4.5lf, %+4.5lf", mean_acceleration_[0], mean_acceleration_[1], mean_acceleration_[2]);
-    // // __android_log_print(ANDROID_LOG_INFO, "AccelerationRotated", "%+4.5lf, %+4.5lf, %+4.5lf", acceleration_[0], acceleration_[1], acceleration_[2]);
-    // // __android_log_print(ANDROID_LOG_INFO, "Velocity", "%+.5lf, %+.5lf, %+.5lf", velocity_[0], velocity_[1], velocity_[2]);
-    // // __android_log_print(ANDROID_LOG_INFO, "VelocityF", "%+.5lf, %+.5lf, %+.5lf", velocity_filtered_[0], velocity_filtered_[1], velocity_filtered_[2]);
-    // // __android_log_print(ANDROID_LOG_INFO, "Position", "%+.5lf, %+.5lf, %+.5lf", position_[0], position_[1], position_[2]);
-    // // __android_log_print(ANDROID_LOG_INFO, "Orientation", "%+.5f, %+.5f, %+.5f, %+.5f", orientation_[0], orientation_[1], orientation_[2], orientation_[3]);
-    // // __android_log_print(ANDROID_LOG_INFO, "Rotation", "%+.5lf, %+.5lf, %+.5lf, %+.5lf", rotation.GetQuaternion()[0], rotation.GetQuaternion()[1], rotation.GetQuaternion()[2], rotation.GetQuaternion()[3]);
-    // // __android_log_print(ANDROID_LOG_INFO, "Timestamp", "%+.5lf", timestamp_s_);
-    // }
+    log_count_++;
+    if (log_count_ > 0) {
+    log_count_ = 0;
+    __android_log_print(ANDROID_LOG_INFO, "Acceleration", "%+4.5lf, %+4.5lf, %+4.5lf", accelerometer_sample_[0], accelerometer_sample_[1], accelerometer_sample_[2]);
+    // __android_log_print(ANDROID_LOG_INFO, "AccelerationF", "%+4.5lf, %+4.5lf, %+4.5lf", accelerometer_sample_filtered_[0], accelerometer_sample_filtered_[1], accelerometer_sample_filtered_[2]);
+    // __android_log_print(ANDROID_LOG_INFO, "AccelerationMean", "%+4.5lf, %+4.5lf, %+4.5lf", mean_acceleration_[0], mean_acceleration_[1], mean_acceleration_[2]);
+    // __android_log_print(ANDROID_LOG_INFO, "AccelerationRotated", "%+4.5lf, %+4.5lf, %+4.5lf", acceleration_[0], acceleration_[1], acceleration_[2]);
+    // __android_log_print(ANDROID_LOG_INFO, "Velocity", "%+.5lf, %+.5lf, %+.5lf", velocity_[0], velocity_[1], velocity_[2]);
+    // __android_log_print(ANDROID_LOG_INFO, "VelocityF", "%+.5lf, %+.5lf, %+.5lf", velocity_filtered_[0], velocity_filtered_[1], velocity_filtered_[2]);
+    // __android_log_print(ANDROID_LOG_INFO, "Position", "%+.5lf, %+.5lf, %+.5lf", position_[0], position_[1], position_[2]);
+    // __android_log_print(ANDROID_LOG_INFO, "Orientation", "%+.5f, %+.5f, %+.5f, %+.5f", orientation_[0], orientation_[1], orientation_[2], orientation_[3]);
+    // __android_log_print(ANDROID_LOG_INFO, "Rotation", "%+.5lf, %+.5lf, %+.5lf, %+.5lf", rotation.GetQuaternion()[0], rotation.GetQuaternion()[1], rotation.GetQuaternion()[2], rotation.GetQuaternion()[3]);
+    // __android_log_print(ANDROID_LOG_INFO, "Timestamp", "%+.5lf", timestamp_s_);
+    }
 
     if(position_[0] < -5 || position_[0] > 5) {
         position_[0] = 0.0;
