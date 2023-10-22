@@ -182,10 +182,6 @@ void HeadTracker::GetPose(int64_t timestamp_ns,
   viewport_orientation_ = viewport_orientation;
   is_viewport_orientation_initialized_ = true;
 
-  const Rotation predicted_rotation_ = Rotation::FromQuaternion(Rotation::QuaternionType(
-          0., 0., 0.7071067811865476, 0.7071067811865476)) * sensor_fusion_->PredictRotation(timestamp_ns);
-  const Vector4 predicted_rotation_quaternion_ = predicted_rotation_.GetQuaternion();
-
   const Vector4 orientation_ =
       GetRotation(viewport_orientation, timestamp_ns).GetQuaternion();
 
@@ -198,15 +194,15 @@ void HeadTracker::GetPose(int64_t timestamp_ns,
   
   // Vector3 out_lin_accel_ = sensor_fusion_->GetLinearAccelerationUpdatedValue();
 
-  out_position = position_estimator_->GetPosition(out_accel_, predicted_rotation_quaternion_, timestamp_ns);//{0.0f, -2.0f, 0.0f};//
+  out_position = position_estimator_->GetPosition(out_accel_, orientation_, timestamp_ns);//{0.0f, -2.0f, 0.0f};//
   
   // logCount_++;
   // if (logCount_ > 30) {
-    // logCount_ = 0;
-    // __android_log_print(ANDROID_LOG_INFO, "HeadTracker accel", "%+f, %+f, %+f", out_accel_[0], out_accel_[1], out_accel_[2]);
-    // __android_log_print(ANDROID_LOG_INFO, "HeadTracker Orientation", "%+.5lf, %+.5lf, %+.5lf, %+.5lf", orientation_[0], orientation_[1], orientation_[2], orientation_[3]);
-    // __android_log_print(ANDROID_LOG_INFO, "HeadTracker predictedOrientation", "%+.5lf, %+.5lf, %+.5lf, %+.5lf", predicted_rotation_quaternion_[0], predicted_rotation_quaternion_[1], predicted_rotation_quaternion_[2], predicted_rotation_quaternion_[3]);
-    // __android_log_print(ANDROID_LOG_INFO, "HeadTracker", "out_position: %f, %f, %f", out_position[0], out_position[1], out_position[2]);
+  //   logCount_ = 0;
+  //   // __android_log_print(ANDROID_LOG_INFO, "HeadTracker accel", "%+f, %+f, %+f", out_accel_[0], out_accel_[1], out_accel_[2]);
+  //   // __android_log_print(ANDROID_LOG_INFO, "HeadTracker Orientation", "%+.5lf, %+.5lf, %+.5lf, %+.5lf", orientation_[0], orientation_[1], orientation_[2], orientation_[3]);
+  //   // __android_log_print(ANDROID_LOG_INFO, "HeadTracker predictedOrientation", "%+.5lf, %+.5lf, %+.5lf, %+.5lf", predicted_rotation_quaternion_[0], predicted_rotation_quaternion_[1], predicted_rotation_quaternion_[2], predicted_rotation_quaternion_[3]);
+  //   // __android_log_print(ANDROID_LOG_INFO, "HeadTracker", "out_position: %f, %f, %f", out_position[0], out_position[1], out_position[2]);
   // }
 
 

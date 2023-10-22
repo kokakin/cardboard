@@ -96,6 +96,12 @@ Rotation GetRotationFromGyroscope(const Vector3& gyroscope_value,
   // - https://developer.apple.com/documentation/coremotion/getting_raw_gyroscope_events
   return Rotation::FromAxisAndAngle(gyroscope_value / velocity,
                                     -timestep_s * velocity);
+  // const Rotation gyro_rotation_ = Rotation::FromAxisAndAngle(gyroscope_value / velocity,
+  //                                   -timestep_s * velocity);
+  
+  // __android_log_print(ANDROID_LOG_INFO, "SensorFusionEkf", "Yaw: %lf, Pitch: %lf, Roll: %lf", gyro_rotation_.GetYawAngle(), gyro_rotation_.GetPitchAngle(), gyro_rotation_.GetRollAngle());
+  // __android_log_print(ANDROID_LOG_INFO, "SensorFusionEkf", "%lf, %lf, %lf, %lf", gyro_rotation_.GetQuaternion()[0], gyro_rotation_.GetQuaternion()[1], gyro_rotation_.GetQuaternion()[2], gyro_rotation_.GetQuaternion()[3]);
+  // return gyro_rotation_;
 }
 
 // Returns the difference of @p timestamp_ns_a and @p timestamp_ns_b in
@@ -243,6 +249,8 @@ void SensorFusionEkf::ProcessGyroscopeSample(const GyroscopeData& sample) {
       state_covariance_ =
           state_covariance_ +
           ((current_timestep_s * current_timestep_s) * process_covariance_);
+      
+      // __android_log_print(ANDROID_LOG_INFO, "SensorFusionEkf", "is_aligned_with_gravity_");
     }
   }
 
@@ -350,13 +358,10 @@ void SensorFusionEkf::ProcessAccelerometerSample(
 }
 
 void SensorFusionEkf::ProcessLinearAccelerationSample(const LinearAccelerationData& sample) {
-
    linear_acceleration_.Set(sample.data[0], sample.data[1], sample.data[2]);
-
 }
 
 void SensorFusionEkf::ProcessPose6DOFSample(const Pose6DOFData& sample) {
-
   pose_6dof_[0] = sample.data[0]; 
   pose_6dof_[1] = sample.data[1]; 
   pose_6dof_[2] = sample.data[2]; 
