@@ -15,16 +15,14 @@ PositionEstimator::PositionEstimator()
     old_accelerometer_sample_({0.0, 0.0, 0.0}),
     older_accelerometer_sample_({0.0, 0.0, 0.0}),
     even_older_accelerometer_sample_({0.0, 0.0, 0.0}),
+    old_velocity_({0.0, 0.0, 0.0}),
+    older_velocity_({0.0, 0.0, 0.0}),
+    even_older_velocity_({0.0, 0.0, 0.0}),
     accelerometer_sample_filtered_({0.0, 0.0, 0.0}),
     old_position_({0.0, 0.0, 0.0}),
-    old_velocity_({0.0, 0.0, 0.0}),
-    old_acceleration_({0.0, 0.0, 0.0}),
-    older_acceleration_({0.0, 0.0, 0.0}),
-    old_orientation_({0.0, 0.0, 0.0, 0.0}),
     velocity_({0.0, 0.0, 0.0}),
     position_({0.0, 0.0, 0.0}),
     acceleration_({0.0, 0.0, 0.0}),
-    mean_acceleration_({0.0, 0.0, 0.0}),
     filter_velocity_(
         {0.07018592810153744, 
          0.2385278285406635, 
@@ -37,18 +35,18 @@ PositionEstimator::PositionEstimator()
          1.084324954301363,
          -0.5409646222138151,
          0.2366964481564892}),
-    filter_accelerometer_(
-        {0.07044588935387128, 
-         0.1408035820770175, 
-         0.07044588935387128
-        }, {
-         1,
-         -1.199678682863306, 
-         0.5157460761550564 }),
+    // filter_accelerometer_(
+    //     {0.07044588935387128, 
+    //      0.1408035820770175, 
+    //      0.07044588935387128
+    //     }, {
+    //      1,
+    //      -1.199678682863306, 
+    //      0.5157460761550564 }),
     log_count_(0),
     old_timestamp_ns_(0) {
         filter_velocity_.Reset();
-        filter_accelerometer_.Reset();
+        // filter_accelerometer_.Reset();
   __android_log_print(ANDROID_LOG_INFO, "Position", "Position constructor");
  }
 
@@ -56,7 +54,7 @@ PositionEstimator::~PositionEstimator() {}
 
 // Only works for small same sign differences ie doesnt work for 0.1 and -0.1
 bool PositionEstimator::ApproximateEqual( double new_value_, double old_value_, double threshold) {
-    if( std::abs( new_value_ ) - std::abs( old_value_ ) > threshold) {
+    if( std::abs( std::abs( new_value_ ) - std::abs( old_value_ ) ) > threshold) {
         return false;
     }
     return true;
@@ -64,134 +62,114 @@ bool PositionEstimator::ApproximateEqual( double new_value_, double old_value_, 
 
 std::array<float, 3> PositionEstimator::GetPosition( Vector3 accelerometer_sample_xyz_, Vector4 orientation_, int64_t timestamp_ns_ ) {
 
-    const Vector3 accelerometer_sample_raw_ = Vector3(-accelerometer_sample_xyz_[1], accelerometer_sample_xyz_[0], accelerometer_sample_xyz_[2]);
-
     const Rotation rotation_ = Rotation::FromQuaternion(orientation_);
     const Rotation anti_rotation_ = Rotation::FromQuaternion(Vector4(-orientation_[0], -orientation_[1], -orientation_[2], orientation_[3]));
-
-    const Vector3 gravity_acceleration_ = rotation_ * Vector3(0.0, 9.87516301, 0.0);
     
+    const Vector3 accelerometer_sample_raw_ = Vector3(-accelerometer_sample_xyz_[1], accelerometer_sample_xyz_[0], accelerometer_sample_xyz_[2]);
+    const Vector3 gravity_acceleration_ = rotation_ * Vector3(0.0, 9.87516301, 0.0);
     const Vector3 accelerometer_sample_ = anti_rotation_ * (accelerometer_sample_raw_ - gravity_acceleration_);
 
     if(old_timestamp_ns_ == 0.0) {
         old_timestamp_ns_ = timestamp_ns_;
-        old_orientation_ = orientation_;
-        mean_acceleration_ = accelerometer_sample_;
         return {0.0f, 0.0f, 0.0f};
     }
 
-    double timestamp_s_ = (static_cast<double>(timestamp_ns_) - old_timestamp_ns_) * 1.0e-9;
+    const double delta_s_ = (static_cast<double>(timestamp_ns_) - static_cast<double>(old_timestamp_ns_)) * 1.0e-9;
 
-    if(ApproximateEqual(accelerometer_sample_[0], old_accelerometer_sample_[0], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[0],older_accelerometer_sample_[0], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[0],even_older_accelerometer_sample_[0], kThresholdAccelerationStable)){
-        mean_acceleration_[0] = accelerometer_sample_[0];
+    acceleration_ = -accelerometer_sample_;
+    if(accelerometer_sample_[0] < kThresholdSignal && ApproximateEqual(accelerometer_sample_[0], old_accelerometer_sample_[0], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[0],older_accelerometer_sample_[0], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[0],even_older_accelerometer_sample_[0], kThresholdAccelerationStable)){
+        acceleration_[0] = 0.0;
     }
-    if(ApproximateEqual(accelerometer_sample_[1], old_accelerometer_sample_[1], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[1],older_accelerometer_sample_[1], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[1],even_older_accelerometer_sample_[1], kThresholdAccelerationStable)){
-        mean_acceleration_[1] = accelerometer_sample_[1];
+    if(accelerometer_sample_[1] < kThresholdSignal && ApproximateEqual(accelerometer_sample_[1], old_accelerometer_sample_[1], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[1],older_accelerometer_sample_[1], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[1],even_older_accelerometer_sample_[1], kThresholdAccelerationStable)){
+        acceleration_[1] = 0.0;
     }
-    if(ApproximateEqual(accelerometer_sample_[2], old_accelerometer_sample_[2], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[2],older_accelerometer_sample_[2], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[2],even_older_accelerometer_sample_[2], kThresholdAccelerationStable)){
-        mean_acceleration_[2] = accelerometer_sample_[2];
+    if(accelerometer_sample_[2] < kThresholdSignal && ApproximateEqual(accelerometer_sample_[2], old_accelerometer_sample_[2], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[2],older_accelerometer_sample_[2], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[2],even_older_accelerometer_sample_[2], kThresholdAccelerationStable)){
+        acceleration_[2] = 0.0;
     }
 
-    // filter_accelerometer_.AddSample(accelerometer_sample_ - mean_acceleration_, timestamp_ns_);
+    // filter_accelerometer_.AddSample(acceleration_, timestamp_ns_);
     // Vector3 accelerometer_sample_filtered_ = filter_accelerometer_.GetFilteredData();
 
-    acceleration_ = -accelerometer_sample_ + mean_acceleration_;
-
-    velocity_ = old_velocity_ + (acceleration_) * timestamp_s_*13;
-
-    filter_velocity_.AddSample(velocity_, timestamp_ns_);
-    Vector3 velocity_filtered_ = filter_velocity_.GetFilteredData() * 0.5 + old_velocity_ * 0.5;
+    velocity_ = old_velocity_ + (acceleration_ * 5) * delta_s_;
     
-    position_ = old_position_ + 0.5* (velocity_filtered_ + old_velocity_) * timestamp_s_*13;
+    if (ApproximateEqual(velocity_[0], old_velocity_[0], kThresholdVelocityBias) && ApproximateEqual(velocity_[0],older_velocity_[0], kThresholdVelocityBias) && ApproximateEqual(velocity_[0],even_older_velocity_[0], kThresholdVelocityBias)){
+        velocity_[0] = 0.0;
+    }
+    if (ApproximateEqual(velocity_[1], old_velocity_[1], kThresholdVelocityBias) && ApproximateEqual(velocity_[1],older_velocity_[1], kThresholdVelocityBias) && ApproximateEqual(velocity_[1],even_older_velocity_[1], kThresholdVelocityBias)){
+        velocity_[1] = 0.0;
+    }
+    if (ApproximateEqual(velocity_[2], old_velocity_[2], kThresholdVelocityBias) && ApproximateEqual(velocity_[2],older_velocity_[2], kThresholdVelocityBias) && ApproximateEqual(velocity_[2],even_older_velocity_[2], kThresholdVelocityBias)){
+        velocity_[2] = 0.0;
+    }
 
-    old_accelerometer_sample_ = accelerometer_sample_;
-    older_accelerometer_sample_ = old_accelerometer_sample_;
+    // filter_velocity_.AddSample(velocity_, timestamp_ns_);
+    // Vector3 velocity_filtered_ = filter_velocity_.GetFilteredData();
+
+
+    position_ = old_position_ + 0.5 * (velocity_ + old_velocity_) * delta_s_;
+
+
+
     even_older_accelerometer_sample_ = older_accelerometer_sample_;
+    older_accelerometer_sample_ = old_accelerometer_sample_;
+    old_accelerometer_sample_ = accelerometer_sample_;
+    even_older_velocity_ = older_velocity_;
+    older_velocity_ = old_velocity_;
+    old_velocity_ = velocity_;
 
-    old_acceleration_ = acceleration_;
-    older_acceleration_ = old_acceleration_;
-
-    old_velocity_ = velocity_filtered_;
     old_position_ = position_;
-
-    old_orientation_ = orientation_;
     old_timestamp_ns_ = timestamp_ns_;
 
-    // const double gravity = std::sqrt(acceleration_unfiltered_[0] * acceleration_unfiltered_[0] + acceleration_unfiltered_[1] * acceleration_unfiltered_[1] + acceleration_unfiltered_[2] * acceleration_unfiltered_[2]);
-
     log_count_++;
-    if (log_count_ > 15) {
+    if (log_count_ > 10) {
     log_count_ = 0;
     
-    __android_log_print(ANDROID_LOG_INFO, "Samples", "%+4.5lf, %+4.5lf, %+4.5lf", accelerometer_sample_[0], accelerometer_sample_[1], accelerometer_sample_[2]);
-    __android_log_print(ANDROID_LOG_INFO, "Acceleration", "%+4.5lf, %+4.5lf, %+4.5lf", acceleration_[0], acceleration_[1], acceleration_[2]);
+    // __android_log_print(ANDROID_LOG_INFO, "Samples", "%+4.5lf, %+4.5lf, %+4.5lf", accelerometer_sample_[0], accelerometer_sample_[1], accelerometer_sample_[2]);
+    // __android_log_print(ANDROID_LOG_INFO, "Acceleration", "%+4.5lf, %+4.5lf, %+4.5lf", acceleration_[0], acceleration_[1], acceleration_[2]);
     // __android_log_print(ANDROID_LOG_INFO, "Acceleration", "%+4.5lf, %+4.5lf, %+4.5lf", acceleration_unfiltered_[0], acceleration_unfiltered_[1], acceleration_unfiltered_[2]);
     // __android_log_print(ANDROID_LOG_INFO, "Gravity", "%+4.5lf, %+4.5lf, %+4.5lf", gravity_acceleration_[0], gravity_acceleration_[1], gravity_acceleration_[2]);
     // __android_log_print(ANDROID_LOG_INFO, "Acceleration_result", "%+4.5lf, %+4.5lf, %+4.5lf", acceleration_[0], acceleration_[1], acceleration_[2]);
     // __android_log_print(ANDROID_LOG_INFO, "Gravity", "%+2.8lf", gravity);
-
     // __android_log_print(ANDROID_LOG_INFO, "AccelerationF", "%+4.5lf, %+4.5lf, %+4.5lf", accelerometer_sample_filtered_[0], accelerometer_sample_filtered_[1], accelerometer_sample_filtered_[2]);
-    // __android_log_print(ANDROID_LOG_INFO, "AccelerationMean", "%+4.5lf, %+4.5lf, %+4.5lf", mean_acceleration_[0], mean_acceleration_[1], mean_acceleration_[2]);
-    // __android_log_print(ANDROID_LOG_INFO, "AccelerationRotated", "%+4.5lf, %+4.5lf, %+4.5lf", acceleration_[0], acceleration_[1], acceleration_[2]);
-    // __android_log_print(ANDROID_LOG_INFO, "Velocity", "%+.5lf, %+.5lf, %+.5lf", velocity_[0], velocity_[1], velocity_[2]);
+    __android_log_print(ANDROID_LOG_INFO, "AccelerationRotated", "%+4.5lf, %+4.5lf, %+4.5lf", acceleration_[0], acceleration_[1], acceleration_[2]);
+    __android_log_print(ANDROID_LOG_INFO, "Velocity", "%+.5lf, %+.5lf, %+.5lf", velocity_[0], velocity_[1], velocity_[2]);
     // __android_log_print(ANDROID_LOG_INFO, "VelocityF", "%+.5lf, %+.5lf, %+.5lf", velocity_filtered_[0], velocity_filtered_[1], velocity_filtered_[2]);
     // __android_log_print(ANDROID_LOG_INFO, "Position", "%+.5lf, %+.5lf, %+.5lf", position_[0], position_[1], position_[2]);
     // __android_log_print(ANDROID_LOG_INFO, "rotation", "%+.5f, %+.5f, %+.5f, %+.5f", orientation_[0], orientation_[1], orientation_[2], orientation_[3]);
     // __android_log_print(ANDROID_LOG_INFO, "rotation", "%+.5f, %+.5f, %+.5f, %+.5f", rotation_.GetQuaternion()[0], rotation_.GetQuaternion()[1], rotation_.GetQuaternion()[2], rotation_.GetQuaternion()[3]);
     // __android_log_print(ANDROID_LOG_INFO, "Angles", "P:%+4.5lf, Y:%+4.5lf, R:%+4.5lf", rotation_.GetPitchAngle()*180.0/M_PI, rotation_.GetYawAngle()*180.0/M_PI, rotation_.GetRollAngle()*180.0/M_PI);
-    // __android_log_print(ANDROID_LOG_INFO, "Timestamp", "%+.5lf", timestamp_s_);
+    __android_log_print(ANDROID_LOG_INFO, "delta_s", "%+4.5lf", delta_s_);
     }
 
-    if(position_[0] < -5 || position_[0] > 5) {
-        if(position_[0] < -5){
-            position_[0] = -5;
-            old_position_[0] = -5.0;
-        } else {
-            position_[0] = 5;
-            old_position_[0] = 5.0;
-        }
-        old_acceleration_[0] = 0.0;
-        older_acceleration_[0] = 0.0;
-        old_accelerometer_sample_[0] = 0.0;
-        older_accelerometer_sample_[0] = 0.0;
-        even_older_accelerometer_sample_[0] = 0.0;
-        old_velocity_[0] = 0.0;
+    if(position_[0] < -5.0 ){
+        position_[0] = -5.0;
+        old_position_[0] = -5.0;
+        old_velocity_ = {0.0, 0.0, 0.0};
+    } 
+    if(position_[0] > 5.0 ) {
+        position_[0] = 5.0;
+        old_position_[0] = 5.0;
+        old_velocity_ = {0.0, 0.0, 0.0};
     }
-    if(position_[1] > 0) {
-        position_[1] = 0.0;
-        old_acceleration_[1] = 0.0;
-        older_acceleration_[1] = 0.0;
-        old_accelerometer_sample_[1] = 0.0;
-        older_accelerometer_sample_[1] = 0.0;
-        even_older_accelerometer_sample_[1] = 0.0;
-        old_velocity_[1] = 0.0;
-        old_position_[1] = 0.0;
+    if(position_[1] > 1.0 ) {
+        position_[1] = 1.0;
+        old_position_[1] = 1.0;
+        old_velocity_ = {0.0, 0.0, 0.0};
     }
-    if(position_[1] < -3) {
-        position_[1] = -3.0;
-        old_position_[1] = -3.0;
-        old_acceleration_[1] = 0.0;
-        older_acceleration_[1] = 0.0;
-        old_accelerometer_sample_[1] = 0.0;
-        older_accelerometer_sample_[1] = 0.0;
-        even_older_accelerometer_sample_[1] = 0.0;
-        old_velocity_[1] = 0.0;
+    if(position_[1] < -4.0 ) {
+        position_[1] = -4.0;
+        old_position_[1] = -4.0;
+        old_velocity_ = {0.0, 0.0, 0.0};
     }
-    
-    if(position_[2] < -5 || position_[2] > 5) {
-        if(position_[2] < -5){
-            position_[2] = -5;
-            old_position_[2] = -5.0;
-        } else {
-            position_[2] = 5;
-            old_position_[2] = 5.0;
-        }
-        old_acceleration_[2] = 0.0;
-        older_acceleration_[2] = 0.0;
-        old_accelerometer_sample_[2] = 0.0;
-        older_accelerometer_sample_[2] = 0.0;
-        even_older_accelerometer_sample_[2] = 0.0;
-        old_velocity_[2] = 0.0;
+    if(position_[2] < -5.0 ) {
+        position_[2] = -5.0;
+        old_position_[2] = -5.0;
+        old_velocity_ = {0.0, 0.0, 0.0};
+    } 
+    if(position_[2] > 5.0 ) {
+        position_[2] = 5;
+        old_position_[2] = 5.0;
+        old_velocity_ = {0.0, 0.0, 0.0};
     }
 
     return {static_cast<float>(position_[0]), static_cast<float>(position_[1]), static_cast<float>(position_[2])};

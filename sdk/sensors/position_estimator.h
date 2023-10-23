@@ -20,9 +20,11 @@ class PositionEstimator {
 
  private:
 
-  const double kThresholdAccelerationStable = 0.05;
+  const double kThresholdAccelerationStable = 0.08;
+  const double kThresholdSignal = 0.5;
 
-  bool StableValueStream( double new_value_, double old_value_, double threshold );
+  const double kThresholdVelocityBias = 0.004;
+
 
   bool ApproximateEqual( double new_value_, double old_value_, double threshold );
 
@@ -30,11 +32,10 @@ class PositionEstimator {
   Vector3 older_accelerometer_sample_;
   Vector3 even_older_accelerometer_sample_;
   Vector3 accelerometer_sample_filtered_;
-  Vector4 old_orientation_;
   Vector3 old_position_;
   Vector3 old_velocity_;
-  Vector3 old_acceleration_;
-  Vector3 older_acceleration_;
+  Vector3 older_velocity_;
+  Vector3 even_older_velocity_;
   Vector3 position_;
   Vector3 velocity_;
   Vector3 acceleration_;
@@ -42,7 +43,7 @@ class PositionEstimator {
   Vector3 mean_acceleration_;
 
   // CauerFilter filter_jerk_;
-  CauerFilter filter_accelerometer_;
+  // CauerFilter filter_accelerometer_;
   IIRFilter4 filter_velocity_;
 
   int64_t old_timestamp_ns_;
