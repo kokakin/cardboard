@@ -171,7 +171,7 @@ void HeadTracker::GetPose(int64_t timestamp_ns,
                           std::array<float, 3>& out_position,
                           std::array<float, 4>& out_orientation) {
 
-  //viewport_orientation is always kLandScapeLeft
+  // viewport_orientation is always kLandScapeLeft
   if (is_viewport_orientation_initialized_ &&
       viewport_orientation != viewport_orientation_) {
     sensor_fusion_->RotateSensorSpaceToStartSpaceTransformation(
@@ -194,19 +194,14 @@ void HeadTracker::GetPose(int64_t timestamp_ns,
   
   // Vector3 out_lin_accel_ = sensor_fusion_->GetLinearAccelerationUpdatedValue();
 
-  out_position = position_estimator_->GetPosition(out_accel_, orientation_, timestamp_ns);//{0.0f, -2.0f, 0.0f};//
+  out_position = position_estimator_->GetPosition(out_accel_, orientation_, timestamp_ns);
   
   // logCount_++;
   // if (logCount_ > 30) {
   //   logCount_ = 0;
   //   // __android_log_print(ANDROID_LOG_INFO, "HeadTracker accel", "%+f, %+f, %+f", out_accel_[0], out_accel_[1], out_accel_[2]);
-  //   // __android_log_print(ANDROID_LOG_INFO, "HeadTracker Orientation", "%+.5lf, %+.5lf, %+.5lf, %+.5lf", orientation_[0], orientation_[1], orientation_[2], orientation_[3]);
-  //   // __android_log_print(ANDROID_LOG_INFO, "HeadTracker predictedOrientation", "%+.5lf, %+.5lf, %+.5lf, %+.5lf", predicted_rotation_quaternion_[0], predicted_rotation_quaternion_[1], predicted_rotation_quaternion_[2], predicted_rotation_quaternion_[3]);
   //   // __android_log_print(ANDROID_LOG_INFO, "HeadTracker", "out_position: %f, %f, %f", out_position[0], out_position[1], out_position[2]);
   // }
-
-
-
 }
 
 void HeadTracker::Recenter() {
