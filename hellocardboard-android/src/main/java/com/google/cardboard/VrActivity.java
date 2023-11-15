@@ -40,6 +40,12 @@ import androidx.core.app.ActivityCompat;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import com.google.cardboard.MediaCodecLoop;
+import androidx.core.content.ContextCompat;
+
+
+
+
 /**
  * A Google Cardboard VR NDK sample application.
  *
@@ -64,6 +70,42 @@ public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuIte
 
   private GLSurfaceView glView;
 
+  private MediaCodecLoop mediaCodecLoopInstance;
+
+  private static class CameraToMpegWrapper implements Runnable {
+    private Throwable mThrowable;
+    private MediaCodecLoop mMediaCodecLoop;
+    // private CameraToMpegTest mTest;
+
+    // private CameraToMpegWrapper(CameraToMpegTest test) {
+    //     mTest = test;
+    private CameraToMpegWrapper(MediaCodecLoop test) {
+        mMediaCodecLoop = test;
+    }
+
+    @Override
+    public void run() {
+        try {
+            // mTest.encodeCameraToMpeg();
+            mMediaCodecLoop.encodeCameraToMpeg();
+        } catch (Throwable th) {
+            mThrowable = th;
+        }
+    }
+
+    /** Entry point. */
+    // public static void runTest(CameraToMpegTest obj) throws Throwable {
+    public static void runMediaCodec(MediaCodecLoop obj) throws Throwable {
+        CameraToMpegWrapper wrapper = new CameraToMpegWrapper(obj);
+        Thread th = new Thread(wrapper, "MediaCodec test");
+        th.start();
+        // th.join();
+        if (wrapper.mThrowable != null) {
+            throw wrapper.mThrowable;
+        }
+    }
+}
+
   @SuppressLint("ClickableViewAccessibility")
   @Override
   public void onCreate(Bundle savedInstance) {
@@ -85,6 +127,7 @@ public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuIte
                 () -> {
                   nativeOnTriggerEvent(nativeApp);
                 });
+            Log.d(TAG, "Screen tapped.");
             return true;
           }
           return false;
@@ -108,6 +151,15 @@ public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuIte
 
     // Prevents screen from dimming/locking.
     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+    mediaCodecLoopInstance = new MediaCodecLoop(this);
+    try {
+      // mediaCodecLoopInstance.testEncodeCameraToMp4();
+      CameraToMpegWrapper.runMediaCodec(mediaCodecLoopInstance);
+    } catch (Throwable t) {
+      Log.e(TAG, "Failed experiment MediaCodecLoop", t);
+    }
+
   }
 
   @Override
@@ -121,11 +173,7 @@ public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuIte
   protected void onResume() {
     super.onResume();
 
-    // On Android P and below, checks for activity to READ_EXTERNAL_STORAGE. When it is not granted,
-    // the application will request them. For Android Q and above, READ_EXTERNAL_STORAGE is optional
-    // and scoped storage will be used instead. If it is provided (but not checked) and there are
-    // device parameters saved in external storage those will be migrated to scoped storage.
-    if (VERSION.SDK_INT < VERSION_CODES.Q && !isReadExternalStorageEnabled()) {
+    if (!isReadExternalStorageEnabled() && !isWriteExternalStorageEnabled()) {
       requestPermissions();
       return;
     }
@@ -200,9 +248,19 @@ public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuIte
         == PackageManager.PERMISSION_GRANTED;
   }
 
+  /**
+   * Checks for WRITE_EXTERNAL_STORAGE permission.
+   *
+   * @return whether the WRITE_EXTERNAL_STORAGE is already granted.
+   */
+  private boolean isWriteExternalStorageEnabled() {
+    return ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        == PackageManager.PERMISSION_GRANTED;
+  }
+
   /** Handles the requests for activity permission to READ_EXTERNAL_STORAGE. */
   private void requestPermissions() {
-    final String[] permissions = new String[] {Manifest.permission.READ_EXTERNAL_STORAGE};
+    final String[] permissions = new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE};
     ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_REQUEST_CODE);
   }
 
@@ -220,6 +278,16 @@ public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuIte
       Toast.makeText(this, R.string.read_storage_permission, Toast.LENGTH_LONG).show();
       if (!ActivityCompat.shouldShowRequestPermissionRationale(
           this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+        // Permission denied with checking "Do not ask again". Note that in Android R "Do not ask
+        // again" is not available anymore.
+        launchPermissionsSettings();
+      }
+      finish();
+    }
+    if (!isWriteExternalStorageEnabled()) {
+      Toast.makeText(this, R.string.read_storage_permission, Toast.LENGTH_LONG).show();
+      if (!ActivityCompat.shouldShowRequestPermissionRationale(
+          this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
         // Permission denied with checking "Do not ask again". Note that in Android R "Do not ask
         // again" is not available anymore.
         launchPermissionsSettings();

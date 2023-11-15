@@ -84,9 +84,9 @@ Rotation GetRotationFromGyroscope(const Vector3& gyroscope_value,
 
   // When there is no rotation data return an identity rotation.
   if (velocity < kEpsilon) {
-    CARDBOARD_LOGI(
-        "PosePrediction::GetRotationFromGyroscope: Velocity really small, "
-        "returning identity rotation.");
+    // CARDBOARD_LOGI(
+    //     "PosePrediction::GetRotationFromGyroscope: Velocity really small, "
+    //     "returning identity rotation.");
     return Rotation::Identity();
   }
   // Since the gyroscope_value is a start from sensor transformation we need to

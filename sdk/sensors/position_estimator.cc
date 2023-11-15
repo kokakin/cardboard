@@ -68,6 +68,8 @@ std::array<float, 3> PositionEstimator::GetPosition( Vector3 accelerometer_sampl
     const double delta_s_ = (static_cast<double>(timestamp_ns_) - static_cast<double>(old_timestamp_ns_)) * 1.0e-9;
 
     acceleration_ = -accelerometer_sample_;
+
+    
     if(accelerometer_sample_[0] < kThresholdSignal && ApproximateEqual(accelerometer_sample_[0], old_accelerometer_sample_[0], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[0],older_accelerometer_sample_[0], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[0],even_older_accelerometer_sample_[0], kThresholdAccelerationStable)){
         acceleration_[0] = 0.0;
     }
@@ -99,7 +101,7 @@ std::array<float, 3> PositionEstimator::GetPosition( Vector3 accelerometer_sampl
     even_older_accelerometer_sample_ = older_accelerometer_sample_;
     older_accelerometer_sample_ = old_accelerometer_sample_;
     old_accelerometer_sample_ = accelerometer_sample_;
-    
+
     even_older_velocity_ = older_velocity_;
     older_velocity_ = old_velocity_;
     old_velocity_ = velocity_;
