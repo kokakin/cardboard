@@ -25,6 +25,10 @@ find_library(GLESv2-lib GLESv2)
 find_library(GLESv3-lib GLESv3)
 find_library(log-lib log)
 
+# find_library(avutil libavutil)
+# find_library(avcodec libavcodec)
+# find_library(avformat libavformat)
+
 set(libs_dir ${CMAKE_CURRENT_SOURCE_DIR}/libraries)
 
 # === Cardboard Sample ===
@@ -34,6 +38,14 @@ file(GLOB native_srcs "src/main/jni/*.cc")
 add_library(cardboard_jni SHARED ${native_srcs})
 # Includes
 target_include_directories(cardboard_jni PRIVATE ${libs_dir})
+
+# FFmpeg
+add_library(extract_mvs SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/extract_mvs.c)
+# add_library(avutil SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/main/jniLibs/${ANDROID_ABI}/libavutil.so)
+# add_library(avcodec SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/main/jniLibs/${ANDROID_ABI}/libavcodec.so)
+# add_library(avformat SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/main/jniLibs/${ANDROID_ABI}/libavformat.so)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/main/jniLibs/include/${ANDROID_ABI})
+
 # Build
 target_link_libraries(cardboard_jni
     ${android-lib}
@@ -41,3 +53,10 @@ target_link_libraries(cardboard_jni
     ${GLESv3-lib}
     ${log-lib}
     ${libs_dir}/jni/${ANDROID_ABI}/libGfxPluginCardboard.so)
+
+target_link_libraries(extract_mvs
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/main/jniLibs/${ANDROID_ABI}/libavutil.so
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/main/jniLibs/${ANDROID_ABI}/libavcodec.so
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/main/jniLibs/${ANDROID_ABI}/libavformat.so
+    ${log-lib}
+    )

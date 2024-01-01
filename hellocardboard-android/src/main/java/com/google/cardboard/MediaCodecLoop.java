@@ -43,6 +43,7 @@ import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 
 import android.content.Context;
@@ -60,8 +61,9 @@ import android.content.Context;
  * formats on different devices, and this use case wasn't well exercised in CTS
  * pre-4.3.)
  * <p>
- * The output file will be something like "/sdcard/test.640x480.mp4".
+ * https://bigflake.com/mediacodec/
  * <p>
+ * https://bigflake.com/mediacodec/CameraToMpegTest.java.txt
  */
 public class MediaCodecLoop {
 
@@ -72,7 +74,6 @@ public class MediaCodecLoop {
             Log.d(TAG, "context is null");
             throw new NullPointerException("context is null");
         } else {
-            Log.d(TAG, "context is not null");
             OUTPUT_DIR = context.getExternalFilesDir(null);
         }
     }
@@ -84,7 +85,7 @@ public class MediaCodecLoop {
     private static final String MIME_TYPE = "video/avc"; // H.264 Advanced Video Coding
     private static final int FRAME_RATE = 15; // fps
     private static final int IFRAME_INTERVAL = 1; // seconds between I-frames
-    private static final long DURATION_SEC = 1; // seconds of video
+    private static final long DURATION_MSEC = 400; // miliseconds of video
 
     // encoder / muxer state
     private MediaCodec mEncoder;
@@ -112,19 +113,22 @@ public class MediaCodecLoop {
         int encHeight = 96;
         int encBitRate = 6000000; // Mbps
 
-        Log.d(TAG, MIME_TYPE + " output " + encWidth + "x" + encHeight + " @" + encBitRate);
+        // Log.d(TAG, MIME_TYPE + " output " + encWidth + "x" + encHeight + " @" + encBitRate);
+
+        String inputPath = new File(OUTPUT_DIR,
+                "/test." + encWidth + "x" + encHeight + ".mp4").toString();
 
         try {
             prepareCamera(encWidth, encHeight);
             prepareEncoder(encWidth, encHeight, encBitRate);
-            prepareDecoder(encWidth, encHeight, encBitRate);
+            // prepareDecoder(encWidth, encHeight, encBitRate);
             mInputSurface.makeCurrent();
             prepareSurfaceTexture();
 
             mCamera.startPreview();
 
             long startWhen = System.nanoTime();
-            long desiredEnd = startWhen + DURATION_SEC * 1000000000L;
+            long desiredEnd = startWhen + DURATION_MSEC * 1000000L;
             SurfaceTexture st = mStManager.getSurfaceTexture();
             int frameCount = 0;
 
@@ -169,6 +173,7 @@ public class MediaCodecLoop {
             releaseCamera();
             releaseEncoder();
             releaseSurfaceTexture();
+            Log.i(TAG, "Finished H.264 video writing!");
         }
     }
 
@@ -184,7 +189,6 @@ public class MediaCodecLoop {
 
         Camera.CameraInfo info = new Camera.CameraInfo();
 
-        // Try to find a front-facing camera (e.g. for videoconferencing).
         int numCameras = Camera.getNumberOfCameras();
         for (int i = 0; i < numCameras; i++) {
             Camera.getCameraInfo(i, info);
@@ -345,39 +349,39 @@ public class MediaCodecLoop {
         mMuxerStarted = false;
     }
 
-    private void prepareDecoder(int width, int height, int bitRate) {
-        mDecoderBufferInfo = new MediaCodec.BufferInfo();
+    // private void prepareDecoder(int width, int height, int bitRate) {
+    //     mDecoderBufferInfo = new MediaCodec.BufferInfo();
 
-        MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, width, height);
+    //     MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, width, height);
 
-        // Set some properties. Failing to specify some of these can cause the
-        // MediaCodec
-        // configure() call to throw an unhelpful exception.
-        format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
-                MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
-        format.setInteger(MediaFormat.KEY_BIT_RATE, bitRate);
-        format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);
-        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
-        if (VERBOSE)
-            Log.d(TAG, "format: " + format);
+    //     // Set some properties. Failing to specify some of these can cause the
+    //     // MediaCodec
+    //     // configure() call to throw an unhelpful exception.
+    //     format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
+    //             MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+    //     format.setInteger(MediaFormat.KEY_BIT_RATE, bitRate);
+    //     format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);
+    //     format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
+    //     if (VERBOSE)
+    //         Log.d(TAG, "format: " + format);
 
-        // Create a MediaCodec encoder, and configure it with our format. Get a Surface
-        // we can use for input and wrap it with a class that handles the EGL work.
-        //
-        // If you want to have two EGL contexts -- one for display, one for recording --
-        // you will likely want to defer instantiation of CodecInputSurface until after
-        // the
-        // "display" EGL context is created, then modify the eglCreateContext call to
-        // take eglGetCurrentContext() as the share_context argument.
-        try {
-            mDecoder = MediaCodec.createDecoderByType(MIME_TYPE);
-        } catch (IOException ioe) {
-            throw new RuntimeException("failed to create decoder", ioe);
-        }
-        mDecoder.configure(format, null, null, 0);
-        // mOutputSurface = new CodecInputSurface(mDecoder.createInputSurface());
-        mDecoder.start();
-    }
+    //     // Create a MediaCodec encoder, and configure it with our format. Get a Surface
+    //     // we can use for input and wrap it with a class that handles the EGL work.
+    //     //
+    //     // If you want to have two EGL contexts -- one for display, one for recording --
+    //     // you will likely want to defer instantiation of CodecInputSurface until after
+    //     // the
+    //     // "display" EGL context is created, then modify the eglCreateContext call to
+    //     // take eglGetCurrentContext() as the share_context argument.
+    //     try {
+    //         mDecoder = MediaCodec.createDecoderByType(MIME_TYPE);
+    //     } catch (IOException ioe) {
+    //         throw new RuntimeException("failed to create decoder", ioe);
+    //     }
+    //     mDecoder.configure(format, null, null, 0);
+    //     // mOutputSurface = new CodecInputSurface(mDecoder.createInputSurface());
+    //     mDecoder.start();
+    // }
 
     /**
      * Releases encoder resources.
@@ -395,15 +399,15 @@ public class MediaCodecLoop {
             e.printStackTrace();
         }
 
-        try {
-            if (mDecoder != null) {
-                mDecoder.stop();
-                mDecoder.release();
-                mDecoder = null;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        // try {
+        //     if (mDecoder != null) {
+        //         mDecoder.stop();
+        //         mDecoder.release();
+        //         mDecoder = null;
+        //     }
+        // } catch (Exception e) {
+        //     e.printStackTrace();
+        // }
 
         try {
             if (mInputSurface != null) {
@@ -460,7 +464,9 @@ public class MediaCodecLoop {
         }
 
         ByteBuffer[] encoderOutputBuffers = mEncoder.getOutputBuffers();
+        int counter = 0;
         while (true) {
+            counter++;
             int encoderStatus = mEncoder.dequeueOutputBuffer(mEncoderBufferInfo, TIMEOUT_USEC);
             if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
                 // no output available yet
@@ -513,17 +519,8 @@ public class MediaCodecLoop {
                     // adjust the ByteBuffer values to match BufferInfo (not needed?)
                     encodedData.position(mEncoderBufferInfo.offset);
                     encodedData.limit(mEncoderBufferInfo.offset + mEncoderBufferInfo.size);
-
-                    // String encodedDataString = "";
-                    // ByteBuffer encodedDataDisplay = encodedData;
-                    // while(encodedDataDisplay.hasRemaining()){
-                    // byte currentByte = encodedDataDisplay.get();
-                    // encodedDataString += String.format("%02X ", currentByte);
-                    // }
-                    // Log.d(TAG,"encodedData: " + encodedDataString);
-
-                    parseFrame(encodedData);
                     
+                    //TODO:find a way to interpret this ByteBuffer instead;                    
                     mMuxer.writeSampleData(mTrackIndex, encodedData, mEncoderBufferInfo);
                     if (VERBOSE)
                         Log.d(TAG, "sent " + mEncoderBufferInfo.size + " bytes to muxer");
@@ -545,6 +542,9 @@ public class MediaCodecLoop {
         }
     }
 
+    /*
+     * https://android.googlesource.com/platform/cts/+/jb-mr2-release/tests/tests/media/src/android/media/cts/DecodeEditEncodeTest.java 
+     */
     private void feedDecoder(ByteBuffer encodedData) {
         if (VERBOSE)
             Log.d(TAG, "feedDecoder");
@@ -630,15 +630,6 @@ public class MediaCodecLoop {
                             // TODO: handle exception
                         }
 
-                        // frameParser(decodedDataDisplay, mDecoderBufferInfo.size,
-                        // mDecoderBufferInfo.presentationTimeUs);
-                        // String decodedDataString = "";
-                        // while(decodedDataDisplay.hasRemaining()){
-                        // byte currentByte = decodedDataDisplay.get();
-                        // decodedDataString += String.format("%02X ", currentByte);
-                        // }
-                        // Log.d(TAG,"encodedData: " + decodedDataString);
-
                         mDecoder.releaseOutputBuffer(decoderStatus, false);
                         if ((mDecoderBufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                             // forward decoder EOS to encoder
@@ -651,54 +642,6 @@ public class MediaCodecLoop {
             }
 
         }
-
-        // File fFile = new File(OUTPUT_DIR, "/test." + decInputData.getChunkTime(0) +
-        // ".mp4");
-        // decInputData.saveToFile(fFile);
-
-    }
-
-    private void parseFrame(ByteBuffer buffer) {
-        Log.e(TAG, "frameParser");
-        while (buffer.hasRemaining()) {
-            byte currentByte = buffer.get();
-            // Log.d(TAG, String.format("%02X ", currentByte));
-            if (currentByte == 0x00) {
-                Log.d(TAG, "Found 0x00");
-                if (buffer.get() == 0x00) {
-                    if (buffer.get() == 0x01) {
-                        if (buffer.get() == 0x67) {
-                            Log.d(TAG, "Found SPS");
-                            int spsSize = buffer.get() & 0x1f;
-                            byte[] sps = new byte[spsSize];
-                            buffer.get(sps);
-                            Log.d(TAG, "SPS: " + bytesToHex(sps));
-                        } else if (buffer.get() == 0x68) {
-                            Log.d(TAG, "Found PPS");
-                            int ppsSize = buffer.get() & 0x1f;
-                            byte[] pps = new byte[ppsSize];
-                            buffer.get(pps);
-                            Log.d(TAG, "PPS: " + bytesToHex(pps));
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    public static String bytesToHex(byte[] bytes) {
-        StringBuilder hexStringBuilder = new StringBuilder(2 * bytes.length);
-        for (byte b : bytes) {
-            hexStringBuilder.append(String.format("%02X", b));
-        }
-        return hexStringBuilder.toString();
-    }
-
-    /**
-     * Generates the presentation time for frame N, in microseconds.
-     */
-    private static long computePresentationTime(int frameIndex) {
-        return 123 + frameIndex * 1000000 / FRAME_RATE;
     }
 
     /**

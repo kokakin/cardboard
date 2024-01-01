@@ -40,24 +40,38 @@ import androidx.core.app.ActivityCompat;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import java.io.File;
 import com.google.cardboard.MediaCodecLoop;
 import androidx.core.content.ContextCompat;
-
-
-
 
 /**
  * A Google Cardboard VR NDK sample application.
  *
  * <p>This is the main Activity for the sample application. It initializes a GLSurfaceView to allow
  * rendering.
+ * 
+ * Also based on https://bigflake.com/mediacodec/
+ * 
+ * With libraries from https://github.com/Javernaut/ffmpeg-android-maker
+ * 
+ * and libraries compiled from with example from https://github.com/FFmpeg/FFmpeg
  */
 // TODO(b/184737638): Remove decorator once the AndroidX migration is completed.
 @SuppressWarnings("deprecation")
 public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
   static {
     System.loadLibrary("cardboard_jni");
+    System.loadLibrary("avutil");
+    System.loadLibrary("avcodec");
+    System.loadLibrary("avformat");
+    System.loadLibrary("extract_mvs");
   }
+
+  // private File OUTPUT_DIR = getExternalFilesDir(null);
+  // String inputPath = new File(OUTPUT_DIR, "/test.128x96.mp4").toString();
+  // String outputPath = new File(OUTPUT_DIR, "/test.128x96.txt").toString();
+  String inputPath = "/storage/emulated/0/Android/data/com.google.cardboard.hellocardboard/files/test.128x96.mp4";
+  String outputPath = "/storage/emulated/0/Android/data/com.google.cardboard.hellocardboard/files/test.128x96.txt";
 
   private static final String TAG = VrActivity.class.getSimpleName();
 
@@ -75,10 +89,7 @@ public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuIte
   private static class CameraToMpegWrapper implements Runnable {
     private Throwable mThrowable;
     private MediaCodecLoop mMediaCodecLoop;
-    // private CameraToMpegTest mTest;
 
-    // private CameraToMpegWrapper(CameraToMpegTest test) {
-    //     mTest = test;
     private CameraToMpegWrapper(MediaCodecLoop test) {
         mMediaCodecLoop = test;
     }
@@ -86,10 +97,9 @@ public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuIte
     @Override
     public void run() {
         try {
-            // mTest.encodeCameraToMpeg();
-            mMediaCodecLoop.encodeCameraToMpeg();
+          mMediaCodecLoop.encodeCameraToMpeg();
         } catch (Throwable th) {
-            mThrowable = th;
+          mThrowable = th;
         }
     }
 
@@ -152,10 +162,13 @@ public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuIte
     // Prevents screen from dimming/locking.
     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+    Log.i(TAG, "Started H.264 data collection!");
     mediaCodecLoopInstance = new MediaCodecLoop(this);
     try {
-      // mediaCodecLoopInstance.testEncodeCameraToMp4();
       CameraToMpegWrapper.runMediaCodec(mediaCodecLoopInstance);
+      Log.i(TAG, "Started H.264 mv extraction!");
+      extractMVs(inputPath, outputPath);
+      Log.i(TAG, "Finished H.264 mv extraction!");
     } catch (Throwable t) {
       Log.e(TAG, "Failed experiment MediaCodecLoop", t);
     }
@@ -332,4 +345,7 @@ public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuIte
   private native void nativeSetScreenParams(long nativeApp, int width, int height);
 
   private native void nativeSwitchViewer(long nativeApp);
+
+  public native void extractMVs(String inputFile, String outputFile);
+
 }
