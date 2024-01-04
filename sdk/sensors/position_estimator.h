@@ -25,13 +25,14 @@ namespace cardboard
     // const double kThresholdVelocityBias = 0.004;
     const double kThresholdSignal = 0.3;
     const double kThresholdAccelerationStable = 0.05;
-    const double kThresholdVelocityBias = 0.004;
+    const double kThresholdVelocityBias = 0.003;
 
     bool ApproximateEqual(double new_value_, double old_value_, double threshold);
 
     Vector3 old_accelerometer_sample_;
     Vector3 older_accelerometer_sample_;
     Vector3 even_older_accelerometer_sample_;
+    Vector3 e2_older_accelerometer_sample_;
 
     Vector3 accelerometer_sample_filtered_;
     Vector3 acceleration_;
@@ -40,6 +41,7 @@ namespace cardboard
     Vector3 old_velocity_;
     Vector3 older_velocity_;
     Vector3 even_older_velocity_;
+    Vector3 e2_older_velocity_;
 
     Vector3 old_position_;
     Vector3 position_;

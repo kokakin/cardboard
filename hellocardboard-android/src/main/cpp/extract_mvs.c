@@ -150,7 +150,7 @@ static int open_codec_context(AVFormatContext *fmt_ctx, enum AVMediaType type)
     return 0;
 }
 
-JNIEXPORT void JNICALL Java_com_google_cardboard_VrActivity_extractMVs(JNIEnv *env, jobject instance, jstring inputFile, jstring outputFile) {
+JNIEXPORT void JNICALL Java_com_google_cardboard_MediaCodecLoop_extractMVs(JNIEnv *env, jobject instance, jstring inputFile, jstring outputFile) {
 
     const char *src_filename = (*env)->GetStringUTFChars(env, inputFile, 0);
     const char *outputFilePath = (*env)->GetStringUTFChars(env, outputFile, 0);

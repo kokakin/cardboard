@@ -96,9 +96,11 @@ class SensorFusionEkf {
 
   Vector3 GetAccelerometerValue() const;
 
-  Vector3 GetLinearAccelerationUpdatedValue() const;
+  Vector3 GetLinearAccelerationValue() const;
 
-  std::array<double, 15> GetPose6DOFUpdatedValue() const;
+  uint64_t GetAccelerometerTimestamp() const;
+
+  std::array<double, 15> GetPose6DOFValue() const;
 
  private:
   // Estimates the average timestep between gyroscope event.

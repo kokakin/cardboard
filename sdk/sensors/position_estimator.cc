@@ -13,9 +13,11 @@ namespace cardboard
         : old_accelerometer_sample_({0.0, 0.0, 0.0}),
           older_accelerometer_sample_({0.0, 0.0, 0.0}),
           even_older_accelerometer_sample_({0.0, 0.0, 0.0}),
+          e2_older_accelerometer_sample_({0.0, 0.0, 0.0}),
           old_velocity_({0.0, 0.0, 0.0}),
           older_velocity_({0.0, 0.0, 0.0}),
           even_older_velocity_({0.0, 0.0, 0.0}),
+          e2_older_velocity_({0.0, 0.0, 0.0}),
           accelerometer_sample_filtered_({0.0, 0.0, 0.0}),
           old_position_({0.0, 0.0, 0.0}),
           velocity_({0.0, 0.0, 0.0}),
@@ -45,11 +47,21 @@ namespace cardboard
     // Only works for small same sign differences ie doesnt work for 0.1 and -0.1
     bool PositionEstimator::ApproximateEqual(double new_value_, double old_value_, double threshold)
     {
-        if (std::abs(std::abs(new_value_) - std::abs(old_value_)) > threshold)
-        {
-            return false;
+        if((new_value_ >= 0.0 && old_value_ >= 0.0) || (new_value_ <= 0.0 && old_value_ <= 0.0)){
+            if (std::abs(std::abs(new_value_) - std::abs(old_value_)) > threshold)
+            {
+                return false;
+            }
+            return true;
         }
-        return true;
+        if((new_value_ >= 0.0 && old_value_ <= 0.0) || (new_value_ <= 0.0 && old_value_ >= 0.0 )){
+            if (std::abs(std::abs(new_value_) + std::abs(old_value_)) > threshold)
+            {
+                return false;
+            }
+            return true;
+        }
+        return false;
     }
 
     std::array<float, 3> PositionEstimator::GetPosition(Vector3 accelerometer_sample_xyz_, Vector4 orientation_, int64_t timestamp_ns_)
@@ -77,34 +89,34 @@ namespace cardboard
         acceleration_ = -accelerometer_sample_;
         // const Vector3 acceleration_unfiltered_ = acceleration_;
 
-        if (accelerometer_sample_[0] < kThresholdSignal && ApproximateEqual(accelerometer_sample_[0], old_accelerometer_sample_[0], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[0], older_accelerometer_sample_[0], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[0], even_older_accelerometer_sample_[0], kThresholdAccelerationStable))
+        if (std::abs(accelerometer_sample_[0]) < kThresholdSignal && ApproximateEqual(accelerometer_sample_[0], old_accelerometer_sample_[0], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[0], older_accelerometer_sample_[0], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[0], even_older_accelerometer_sample_[0], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[0], e2_older_accelerometer_sample_[0], kThresholdAccelerationStable))
         {
             acceleration_[0] = 0.0;
         }
-        if (accelerometer_sample_[1] < kThresholdSignal && ApproximateEqual(accelerometer_sample_[1], old_accelerometer_sample_[1], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[1], older_accelerometer_sample_[1], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[1], even_older_accelerometer_sample_[1], kThresholdAccelerationStable))
+        if (std::abs(accelerometer_sample_[1]) < kThresholdSignal && ApproximateEqual(accelerometer_sample_[1], old_accelerometer_sample_[1], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[1], older_accelerometer_sample_[1], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[1], even_older_accelerometer_sample_[1], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[1], e2_older_accelerometer_sample_[1], kThresholdAccelerationStable))
         {
             acceleration_[1] = 0.0;
         }
-        if (accelerometer_sample_[2] < kThresholdSignal && ApproximateEqual(accelerometer_sample_[2], old_accelerometer_sample_[2], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[2], older_accelerometer_sample_[2], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[2], even_older_accelerometer_sample_[2], kThresholdAccelerationStable))
+        if (std::abs(accelerometer_sample_[2]) < kThresholdSignal && ApproximateEqual(accelerometer_sample_[2], old_accelerometer_sample_[2], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[2], older_accelerometer_sample_[2], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[2], even_older_accelerometer_sample_[2], kThresholdAccelerationStable) && ApproximateEqual(accelerometer_sample_[2], e2_older_accelerometer_sample_[2], kThresholdAccelerationStable))
         {
             acceleration_[2] = 0.0;
         }
 
         velocity_ = old_velocity_ + (acceleration_ * 15) * delta_s_;
 
-        if ((acceleration_[0] == 0) && ApproximateEqual(velocity_[0], old_velocity_[0], kThresholdVelocityBias) && ApproximateEqual(velocity_[0], older_velocity_[0], kThresholdVelocityBias) && ApproximateEqual(velocity_[0], even_older_velocity_[0], kThresholdVelocityBias))
+        if ((acceleration_[0] == 0.0) && ApproximateEqual(velocity_[0], old_velocity_[0], kThresholdVelocityBias) && ApproximateEqual(velocity_[0], older_velocity_[0], kThresholdVelocityBias) && ApproximateEqual(velocity_[0], even_older_velocity_[0], kThresholdVelocityBias) && ApproximateEqual(velocity_[0], e2_older_velocity_[0], kThresholdVelocityBias))
         {
             velocity_[0] = 0.0;
             old_velocity_[0] = 0.0;
             older_velocity_[0] = 0.0;
         }
-        if ((acceleration_[1] == 0) && ApproximateEqual(velocity_[1], old_velocity_[1], kThresholdVelocityBias) && ApproximateEqual(velocity_[1], older_velocity_[1], kThresholdVelocityBias) && ApproximateEqual(velocity_[1], even_older_velocity_[1], kThresholdVelocityBias))
+        if ((acceleration_[1] == 0.0) && ApproximateEqual(velocity_[1], old_velocity_[1], kThresholdVelocityBias) && ApproximateEqual(velocity_[1], older_velocity_[1], kThresholdVelocityBias) && ApproximateEqual(velocity_[1], even_older_velocity_[1], kThresholdVelocityBias) && ApproximateEqual(velocity_[1], e2_older_velocity_[1], kThresholdVelocityBias))
         {
             velocity_[1] = 0.0;
             old_velocity_[1] = 0.0;
             older_velocity_[1] = 0.0;
         }
-        if ((acceleration_[2] == 0) && ApproximateEqual(velocity_[2], old_velocity_[2], kThresholdVelocityBias) && ApproximateEqual(velocity_[2], older_velocity_[2], kThresholdVelocityBias) && ApproximateEqual(velocity_[2], even_older_velocity_[2], kThresholdVelocityBias))
+        if ((acceleration_[2] == 0.0) && ApproximateEqual(velocity_[2], old_velocity_[2], kThresholdVelocityBias) && ApproximateEqual(velocity_[2], older_velocity_[2], kThresholdVelocityBias) && ApproximateEqual(velocity_[2], even_older_velocity_[2], kThresholdVelocityBias) && ApproximateEqual(velocity_[2], e2_older_velocity_[2], kThresholdVelocityBias))
         {
             velocity_[2] = 0.0;
             old_velocity_[2] = 0.0;
@@ -116,10 +128,12 @@ namespace cardboard
 
         position_ = old_position_ + 0.5 * (velocity_ + old_velocity_) * delta_s_;
 
+        e2_older_accelerometer_sample_ = even_older_accelerometer_sample_;
         even_older_accelerometer_sample_ = older_accelerometer_sample_;
         older_accelerometer_sample_ = old_accelerometer_sample_;
         old_accelerometer_sample_ = accelerometer_sample_;
 
+        e2_older_velocity_ = even_older_velocity_;
         even_older_velocity_ = older_velocity_;
         older_velocity_ = old_velocity_;
         old_velocity_ = velocity_;
@@ -143,7 +157,7 @@ namespace cardboard
             // __android_log_print(ANDROID_LOG_INFO, "rotation", "%+.5f, %+.5f, %+.5f, %+.5f", rotation_.GetQuaternion()[0], rotation_.GetQuaternion()[1], rotation_.GetQuaternion()[2], rotation_.GetQuaternion()[3]);
             // __android_log_print(ANDROID_LOG_INFO, "Angles", "P:%+4.5lf, Y:%+4.5lf, R:%+4.5lf", rotation_.GetPitchAngle()*180.0/M_PI, rotation_.GetYawAngle()*180.0/M_PI, rotation_.GetRollAngle()*180.0/M_PI);
 
-            __android_log_print(ANDROID_LOG_INFO, "delta_s", "%+4.5lf", delta_s_);
+            // __android_log_print(ANDROID_LOG_INFO, "delta_s", "%+4.5lf", delta_s_);
         }
 
         if (position_[0] < -4.0)
@@ -170,10 +184,10 @@ namespace cardboard
             older_velocity_ = {0.0, 0.0, 0.0};
             even_older_velocity_ = {0.0, 0.0, 0.0};
         }
-        if (position_[1] < -4.0)
+        if (position_[1] < -3.0)
         {
-            position_[1] = -4.0;
-            old_position_[1] = -4.0;
+            position_[1] = -3.0;
+            old_position_[1] = -3.0;
             old_velocity_ = {0.0, 0.0, 0.0};
             older_velocity_ = {0.0, 0.0, 0.0};
             even_older_velocity_ = {0.0, 0.0, 0.0};

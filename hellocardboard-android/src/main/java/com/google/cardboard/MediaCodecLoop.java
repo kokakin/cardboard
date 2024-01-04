@@ -66,8 +66,16 @@ import android.content.Context;
  * https://bigflake.com/mediacodec/CameraToMpegTest.java.txt
  */
 public class MediaCodecLoop {
-
+     
     private static File OUTPUT_DIR;
+
+    static {
+        System.loadLibrary("cardboard_jni");
+        System.loadLibrary("avutil");
+        System.loadLibrary("avcodec");
+        System.loadLibrary("avformat");
+        System.loadLibrary("extract_mvs");
+      }
 
     public MediaCodecLoop(Context context) {
         if (context == null) {
@@ -117,6 +125,8 @@ public class MediaCodecLoop {
 
         String inputPath = new File(OUTPUT_DIR,
                 "/test." + encWidth + "x" + encHeight + ".mp4").toString();
+        String outputPath = new File(OUTPUT_DIR,
+                "/test." + encWidth + "x" + encHeight + ".txt").toString();
 
         try {
             prepareCamera(encWidth, encHeight);
@@ -173,7 +183,9 @@ public class MediaCodecLoop {
             releaseCamera();
             releaseEncoder();
             releaseSurfaceTexture();
-            Log.i(TAG, "Finished H.264 video writing!");
+            Log.i(TAG, "Started H.264 mv extraction!");
+            extractMVs(inputPath, outputPath);
+            Log.i(TAG, "Finished H.264 process!");
         }
     }
 
@@ -1217,4 +1229,7 @@ public class MediaCodecLoop {
             }
         }
     }
+
+    public native void extractMVs(String inputFile, String outputFile);
+
 }

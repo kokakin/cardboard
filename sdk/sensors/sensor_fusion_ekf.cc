@@ -313,7 +313,7 @@ void SensorFusionEkf::ProcessAccelerometerSample(
   // Process gyroscope bias estimation.
   gyroscope_bias_estimator_.ProcessAccelerometer(sample.data,
                                                  sample.sensor_timestamp_ns);
-
+  
   if (!is_aligned_with_gravity_) {
     // This is the first accelerometer measurement so it initializes the
     // orientation estimate.
@@ -435,11 +435,15 @@ Vector3 SensorFusionEkf::GetAccelerometerValue() const {
   return accelerometer_measurement_;
 }
 
-Vector3 SensorFusionEkf::GetLinearAccelerationUpdatedValue() const {
+uint64_t SensorFusionEkf::GetAccelerometerTimestamp() const {
+  return current_accelerometer_sensor_timestamp_ns_;
+}
+
+Vector3 SensorFusionEkf::GetLinearAccelerationValue() const {
   return linear_acceleration_;
 }
 
-std::array<double, 15> SensorFusionEkf::GetPose6DOFUpdatedValue() const {
+std::array<double, 15> SensorFusionEkf::GetPose6DOFValue() const {
   return pose_6dof_;
 }
 

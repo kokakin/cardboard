@@ -43,35 +43,29 @@ import javax.microedition.khronos.opengles.GL10;
 import java.io.File;
 import com.google.cardboard.MediaCodecLoop;
 import androidx.core.content.ContextCompat;
+import android.content.Context;
 
 /**
  * A Google Cardboard VR NDK sample application.
  *
- * <p>This is the main Activity for the sample application. It initializes a GLSurfaceView to allow
+ * <p>
+ * This is the main Activity for the sample application. It initializes a
+ * GLSurfaceView to allow
  * rendering.
  * 
  * Also based on https://bigflake.com/mediacodec/
  * 
  * With libraries from https://github.com/Javernaut/ffmpeg-android-maker
  * 
- * and libraries compiled from with example from https://github.com/FFmpeg/FFmpeg
+ * and libraries compiled from with example from
+ * https://github.com/FFmpeg/FFmpeg
  */
 // TODO(b/184737638): Remove decorator once the AndroidX migration is completed.
 @SuppressWarnings("deprecation")
 public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
   static {
     System.loadLibrary("cardboard_jni");
-    System.loadLibrary("avutil");
-    System.loadLibrary("avcodec");
-    System.loadLibrary("avformat");
-    System.loadLibrary("extract_mvs");
   }
-
-  // private File OUTPUT_DIR = getExternalFilesDir(null);
-  // String inputPath = new File(OUTPUT_DIR, "/test.128x96.mp4").toString();
-  // String outputPath = new File(OUTPUT_DIR, "/test.128x96.txt").toString();
-  String inputPath = "/storage/emulated/0/Android/data/com.google.cardboard.hellocardboard/files/test.128x96.mp4";
-  String outputPath = "/storage/emulated/0/Android/data/com.google.cardboard.hellocardboard/files/test.128x96.txt";
 
   private static final String TAG = VrActivity.class.getSimpleName();
 
@@ -79,7 +73,8 @@ public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuIte
   private static final int PERMISSIONS_REQUEST_CODE = 2;
 
   // Opaque native pointer to the native CardboardApp instance.
-  // This object is owned by the VrActivity instance and passed to the native methods.
+  // This object is owned by the VrActivity instance and passed to the native
+  // methods.
   private long nativeApp;
 
   private GLSurfaceView glView;
@@ -91,30 +86,39 @@ public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuIte
     private MediaCodecLoop mMediaCodecLoop;
 
     private CameraToMpegWrapper(MediaCodecLoop test) {
-        mMediaCodecLoop = test;
+      mMediaCodecLoop = test;
     }
 
     @Override
     public void run() {
-        try {
-          mMediaCodecLoop.encodeCameraToMpeg();
-        } catch (Throwable th) {
-          mThrowable = th;
-        }
+      try {
+        mMediaCodecLoop.encodeCameraToMpeg();
+      } catch (Throwable th) {
+        mThrowable = th;
+      }
     }
 
     /** Entry point. */
-    // public static void runTest(CameraToMpegTest obj) throws Throwable {
     public static void runMediaCodec(MediaCodecLoop obj) throws Throwable {
-        CameraToMpegWrapper wrapper = new CameraToMpegWrapper(obj);
-        Thread th = new Thread(wrapper, "MediaCodec test");
-        th.start();
-        // th.join();
-        if (wrapper.mThrowable != null) {
-            throw wrapper.mThrowable;
-        }
+      CameraToMpegWrapper wrapper = new CameraToMpegWrapper(obj);
+      Thread th = new Thread(wrapper, "MediaCodec test");
+      th.start();
+      // th.join();
+      if (wrapper.mThrowable != null) {
+        throw wrapper.mThrowable;
+      }
     }
-}
+  }
+
+  private String getAppDataDirectory(Context context) {
+    // Get the external storage directory
+    File externalStorageDir = context.getExternalFilesDir(null);
+
+    // Construct the path to the Android/data/ directory for your app
+    String appDataDirectory = externalStorageDir.getAbsolutePath();
+
+    return appDataDirectory;
+  }
 
   @SuppressLint("ClickableViewAccessibility")
   @Override
@@ -122,6 +126,11 @@ public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuIte
     super.onCreate(savedInstance);
 
     nativeApp = nativeOnCreate(getAssets());
+
+    String appDataDirectory = getAppDataDirectory(this);
+    String inputPath = new File(appDataDirectory, "/test.128x96.mp4").toString();
+    String outputPath = new File(appDataDirectory, "/test.128x96.txt").toString();
+
 
     setContentView(R.layout.activity_vr);
     glView = findViewById(R.id.surface_view);
@@ -143,7 +152,8 @@ public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuIte
           return false;
         });
 
-    // TODO(b/139010241): Avoid that action and status bar are displayed when pressing settings
+    // TODO(b/139010241): Avoid that action and status bar are displayed when
+    // pressing settings
     // button.
     setImmersiveSticky();
     View decorView = getWindow().getDecorView();
@@ -166,9 +176,6 @@ public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuIte
     mediaCodecLoopInstance = new MediaCodecLoop(this);
     try {
       CameraToMpegWrapper.runMediaCodec(mediaCodecLoopInstance);
-      Log.i(TAG, "Started H.264 mv extraction!");
-      extractMVs(inputPath, outputPath);
-      Log.i(TAG, "Finished H.264 mv extraction!");
     } catch (Throwable t) {
       Log.e(TAG, "Failed experiment MediaCodecLoop", t);
     }
@@ -257,8 +264,8 @@ public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuIte
    * @return whether the READ_EXTERNAL_STORAGE is already granted.
    */
   private boolean isReadExternalStorageEnabled() {
-    return ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-        == PackageManager.PERMISSION_GRANTED;
+    return ActivityCompat.checkSelfPermission(this,
+        Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
   }
 
   /**
@@ -267,20 +274,23 @@ public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuIte
    * @return whether the WRITE_EXTERNAL_STORAGE is already granted.
    */
   private boolean isWriteExternalStorageEnabled() {
-    return ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-        == PackageManager.PERMISSION_GRANTED;
+    return ActivityCompat.checkSelfPermission(this,
+        Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
   }
 
   /** Handles the requests for activity permission to READ_EXTERNAL_STORAGE. */
   private void requestPermissions() {
-    final String[] permissions = new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE};
+    final String[] permissions = new String[] { Manifest.permission.WRITE_EXTERNAL_STORAGE,
+        Manifest.permission.READ_EXTERNAL_STORAGE };
     ActivityCompat.requestPermissions(this, permissions, PERMISSIONS_REQUEST_CODE);
   }
 
   /**
    * Callback for the result from requesting permissions.
    *
-   * <p>When READ_EXTERNAL_STORAGE permission is not granted, the settings view will be launched
+   * <p>
+   * When READ_EXTERNAL_STORAGE permission is not granted, the settings view will
+   * be launched
    * with a toast explaining why it is required.
    */
   @Override
@@ -291,7 +301,8 @@ public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuIte
       Toast.makeText(this, R.string.read_storage_permission, Toast.LENGTH_LONG).show();
       if (!ActivityCompat.shouldShowRequestPermissionRationale(
           this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
-        // Permission denied with checking "Do not ask again". Note that in Android R "Do not ask
+        // Permission denied with checking "Do not ask again". Note that in Android R
+        // "Do not ask
         // again" is not available anymore.
         launchPermissionsSettings();
       }
@@ -301,7 +312,8 @@ public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuIte
       Toast.makeText(this, R.string.read_storage_permission, Toast.LENGTH_LONG).show();
       if (!ActivityCompat.shouldShowRequestPermissionRationale(
           this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-        // Permission denied with checking "Do not ask again". Note that in Android R "Do not ask
+        // Permission denied with checking "Do not ask again". Note that in Android R
+        // "Do not ask
         // again" is not available anymore.
         launchPermissionsSettings();
       }
@@ -345,7 +357,5 @@ public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuIte
   private native void nativeSetScreenParams(long nativeApp, int width, int height);
 
   private native void nativeSwitchViewer(long nativeApp);
-
-  public native void extractMVs(String inputFile, String outputFile);
 
 }

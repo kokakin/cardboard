@@ -191,17 +191,12 @@ void HeadTracker::GetPose(int64_t timestamp_ns,
   out_orientation[3] = static_cast<float>(orientation_[3]);
 
   Vector3 out_accel_ = sensor_fusion_->GetAccelerometerValue();
+  uint64_t timestamp_accel_ = sensor_fusion_->GetAccelerometerTimestamp();
   
-  // Vector3 out_lin_accel_ = sensor_fusion_->GetLinearAccelerationUpdatedValue();
+  // Vector3 out_lin_accel_ = sensor_fusion_->GetLinearAccelerationValue();
 
-  out_position = position_estimator_->GetPosition(out_accel_, orientation_, timestamp_ns);
-  
-  // logCount_++;
-  // if (logCount_ > 30) {
-  //   logCount_ = 0;
-  //   // __android_log_print(ANDROID_LOG_INFO, "HeadTracker accel", "%+f, %+f, %+f", out_accel_[0], out_accel_[1], out_accel_[2]);
-  //   // __android_log_print(ANDROID_LOG_INFO, "HeadTracker", "out_position: %f, %f, %f", out_position[0], out_position[1], out_position[2]);
-  // }
+  out_position = position_estimator_->GetPosition(out_accel_, orientation_, timestamp_accel_);
+
 }
 
 void HeadTracker::Recenter() {
@@ -258,10 +253,6 @@ Rotation HeadTracker::GetRotation(
     int64_t timestamp_ns) const {
   const Rotation predicted_rotation =
       sensor_fusion_->PredictRotation(timestamp_ns);
-
-  // __android_log_print(ANDROID_LOG_INFO, "SensorToDisplayRotations", "%+.5f, %+.5f, %+.5f, %+.5f", SensorToDisplayRotations()[viewport_orientation].GetQuaternion()[0], SensorToDisplayRotations()[viewport_orientation].GetQuaternion()[1], SensorToDisplayRotations()[viewport_orientation].GetQuaternion()[2], SensorToDisplayRotations()[viewport_orientation].GetQuaternion()[3]);
-  // __android_log_print(ANDROID_LOG_INFO, "predicted_rotation", "%+.5f, %+.5f, %+.5f, %+.5f", predicted_rotation.GetQuaternion()[0], predicted_rotation.GetQuaternion()[1], predicted_rotation.GetQuaternion()[2], predicted_rotation.GetQuaternion()[3]);
-  // __android_log_print(ANDROID_LOG_INFO, "EkfToHeadTrackerRotations", "%+.5f, %+.5f, %+.5f, %+.5f", EkfToHeadTrackerRotations()[viewport_orientation].GetQuaternion()[0], EkfToHeadTrackerRotations()[viewport_orientation].GetQuaternion()[1], EkfToHeadTrackerRotations()[viewport_orientation].GetQuaternion()[2], EkfToHeadTrackerRotations()[viewport_orientation].GetQuaternion()[3]);
 
   // In order to update our pose as the sensor changes, we begin with the
   // inverse default orientation (the orientation returned by a reset sensor,
