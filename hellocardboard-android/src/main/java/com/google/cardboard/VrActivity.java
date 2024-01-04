@@ -96,6 +96,11 @@ public class VrActivity extends AppCompatActivity implements PopupMenu.OnMenuIte
       } catch (Throwable th) {
         mThrowable = th;
       }
+      try {
+        mMediaCodecLoop.extractMVsWrapper();
+      } catch (Throwable th) {
+        mThrowable = th;
+      }
     }
 
     /** Entry point. */
