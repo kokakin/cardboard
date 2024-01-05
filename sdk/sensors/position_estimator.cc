@@ -141,13 +141,14 @@ namespace cardboard
         old_position_ = position_;
         old_timestamp_ns_ = timestamp_ns_;
 
-        // log_count_++;
-        if (log_count_ > 0) {
+        log_count_++;
+        if (log_count_ > 15) {
             log_count_ = 0;
 
+            __android_log_print(ANDROID_LOG_INFO, "Accelerometer", "%+4.5lf, %+4.5lf, %+4.5lf", accelerometer_sample_xyz_[0], accelerometer_sample_xyz_[1], accelerometer_sample_xyz_[2]);
             // __android_log_print(ANDROID_LOG_INFO, "AccelerationG", "%+4.5lf, %+4.5lf, %+4.5lf", acceleration_with_gravity_[0], acceleration_with_gravity_[1], acceleration_with_gravity_[2]);
             // __android_log_print(ANDROID_LOG_INFO, "AccelerationU", "%+4.5lf, %+4.5lf, %+4.5lf", acceleration_unfiltered_[0], acceleration_unfiltered_[1], acceleration_unfiltered_[2]);
-            // __android_log_print(ANDROID_LOG_INFO, "Acceleration", "%+4.5lf, %+4.5lf, %+4.5lf", acceleration_[0], acceleration_[1], acceleration_[2]);
+            __android_log_print(ANDROID_LOG_INFO, "Acceleration", "%+4.5lf, %+4.5lf, %+4.5lf", acceleration_[0], acceleration_[1], acceleration_[2]);
 
             // __android_log_print(ANDROID_LOG_INFO, "Velocity", "%+.5lf, %+.5lf, %+.5lf", velocity_[0], velocity_[1], velocity_[2]);
 

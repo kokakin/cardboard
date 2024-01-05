@@ -84,7 +84,7 @@ static int decode_packet(const AVPacket *pkt)
                     // using only one type of prediction
                     if (mv->source == -1)
                     {   
-                        __android_log_print(ANDROID_LOG_ERROR, "MVs", "%4d,%4d,%4d,%4d,%4d,%4d",
+                        __android_log_print(ANDROID_LOG_ERROR, "MVs", " %4d, %4d, %+4d, %+4d, %+4d, %+4d",
                             video_frame_count, 
                             mv->w*mv->h, 
                             mv->src_x, 
